@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-iced = { version = "0.13.1", features = ["image", "canvas", "advanced"] }
+iced = { version = "0.13.1", features = ["image", "canvas", "advanced", "smol"] }
 iced_layershell = "0.13.5"

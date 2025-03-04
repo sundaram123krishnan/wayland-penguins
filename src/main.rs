@@ -5,6 +5,8 @@ use iced_layershell::settings::{LayerShellSettings, Settings, StartMode};
 use std::sync::LazyLock;
 use iced::mouse::Cursor;
 use iced::widget::canvas::{Cache, Geometry, Path};
+use crate::Message::Tick;
+
 
 const PENGUIN: &[u8] = include_bytes!("../assets/pngwing.com.png");
 static PENGUIN_HANDLE: LazyLock<image::Handle> =
@@ -25,11 +27,15 @@ fn main() {
 #[derive(Default)]
 struct AnimatePenguin {
     draw_cache: Cache,
+    move_x: f32,
+    move_y: f32,
 }
 
 #[to_layer_message]
 #[derive(Debug, Clone)]
-enum Message {}
+pub enum Message {
+    Tick,
+}
 
 impl Application for AnimatePenguin {
     type Executor = iced::executor::Default;
@@ -40,6 +46,7 @@ impl Application for AnimatePenguin {
     fn new(flags: Self::Flags) -> (Self, Task<Self::Message>) {
         (
             Self {
+                move_y: 950.0,
                 ..Default::default()
             }, Task::none()
         )
@@ -51,13 +58,24 @@ impl Application for AnimatePenguin {
             text_color: Color::WHITE,
         }
     }
+    fn subscription(&self) -> iced::Subscription<Self::Message> {
+        iced::time::every(std::time::Duration::from_millis(10))
+            .map(|_| Message::Tick)
+    }
 
     fn namespace(&self) -> String {
         String::from("Penguins Animation")
     }
 
     fn update(&mut self, message: Self::Message) -> Task<Self::Message> {
-        todo!()
+        return match message {
+            Message::Tick => {
+                self.move_x += 1.0;
+                self.draw_cache.clear();
+                Task::none()
+            }
+            _ => todo!(),
+        }
     }
 
     fn view(&self) -> Element<'_, Self::Message, Self::Theme, Renderer> {
@@ -65,7 +83,9 @@ impl Application for AnimatePenguin {
         //     text("hello"),
         //    image(PENGUIN_HANDLE.clone()).width(150).height(150),
         // ].into()
-        canvas(self).height(Length::Fill).width(Length::Fill).into()
+        column![
+            canvas(self).height(Length::Fill).width(Length::Fill),
+        ].into()
 
     }
 }
@@ -95,10 +115,10 @@ impl <Message> canvas::Program<Message> for AnimatePenguin{
 
             frame.draw_image(
                 Rectangle {
-                    x: 200.0,
-                    y: 200.0,
-                    width: 150.0,
-                    height: 150.0,
+                    x: self.move_x,
+                    y: 950.0,
+                    width: 50.0,
+                    height: 50.0,
                 },
                 image,
             );
