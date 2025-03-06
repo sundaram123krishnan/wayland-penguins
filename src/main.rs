@@ -1,40 +1,44 @@
-use iced::{Color, Element, Length, Point, Radians, Rectangle, Renderer, Size, Task, Theme};
-use iced_layershell::{to_layer_message, Application};
-use iced::widget::{text, column, button, image, canvas, Image};
-use iced_layershell::settings::{LayerShellSettings, Settings, StartMode};
-use std::sync::LazyLock;
+use crate::Message::Tick;
+use iced::advanced::widget::Id;
 use iced::mouse::Cursor;
 use iced::widget::canvas::{Cache, Geometry, Path};
-use crate::Message::Tick;
-
+use iced::widget::{button, canvas, column, image, text, Image};
+use iced::window::{self, get_latest};
+use iced::{
+    Color, Element, Length, Point, Radians, Rectangle, Renderer, Size, Subscription, Task, Theme,
+};
+use iced_layershell::settings::{LayerShellSettings, Settings, StartMode};
+use iced_layershell::{to_layer_message, Application};
+use std::sync::LazyLock;
 
 const PENGUIN: &[u8] = include_bytes!("../assets/pngwing.com.png");
 static PENGUIN_HANDLE: LazyLock<image::Handle> =
     LazyLock::new(|| image::Handle::from_bytes(PENGUIN));
 
 fn main() {
-    AnimatePenguin::run(
-        Settings {
-            layer_settings: LayerShellSettings {
-                size: Some((1900, 1080)),
-                events_transparent: true,
-                ..Default::default()
-            },
-                ..Default::default()
-        }
-    ).unwrap()
+    AnimatePenguin::run(Settings {
+        layer_settings: LayerShellSettings {
+            size: Some((1900, 1080)),
+            events_transparent: true,
+            ..Default::default()
+        },
+        ..Default::default()
+    })
+    .unwrap()
 }
 #[derive(Default)]
 struct AnimatePenguin {
     draw_cache: Cache,
     move_x: f32,
     move_y: f32,
+    screen_size: Size,
 }
 
 #[to_layer_message]
 #[derive(Debug, Clone)]
 pub enum Message {
     Tick,
+    ScreenSizeReceived(Size),
 }
 
 impl Application for AnimatePenguin {
@@ -48,7 +52,8 @@ impl Application for AnimatePenguin {
             Self {
                 move_y: 950.0,
                 ..Default::default()
-            }, Task::none()
+            },
+            window::get_size(window::Id::unique()).map(|size| Message::ScreenSizeReceived(size)),
         )
     }
     fn style(&self, theme: &iced::Theme) -> iced_layershell::Appearance {
@@ -59,8 +64,13 @@ impl Application for AnimatePenguin {
         }
     }
     fn subscription(&self) -> iced::Subscription<Self::Message> {
-        iced::time::every(std::time::Duration::from_millis(10))
-            .map(|_| Message::Tick)
+        // iced::time::every(std::time::Duration::from_millis(10))
+        //     .map(|_| Message::Tick)
+
+        iced::Subscription::batch(vec![iced::time::every(std::time::Duration::from_millis(
+            10,
+        ))
+        .map(|_| Message::Tick)])
     }
 
     fn namespace(&self) -> String {
@@ -74,23 +84,24 @@ impl Application for AnimatePenguin {
                 self.draw_cache.clear();
                 Task::none()
             }
+
+            Message::ScreenSizeReceived(size) => {
+                
+                self.screen_size = size;
+                println!("{} {}", size.width, size.height);
+                Task::none()
+            }
             _ => todo!(),
-        }
+        };
     }
 
     fn view(&self) -> Element<'_, Self::Message, Self::Theme, Renderer> {
-        // column![
-        //     text("hello"),
-        //    image(PENGUIN_HANDLE.clone()).width(150).height(150),
-        // ].into()
-        column![
-            canvas(self).height(Length::Fill).width(Length::Fill),
-        ].into()
-
+       
+        column![canvas(self).height(Length::Fill).width(Length::Fill),].into()
     }
 }
 
-impl <Message> canvas::Program<Message> for AnimatePenguin{
+impl<Message> canvas::Program<Message> for AnimatePenguin {
     type State = ();
 
     fn draw(
