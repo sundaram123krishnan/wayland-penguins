@@ -1,14 +1,11 @@
-use crate::Message::Tick;
-use iced::advanced::widget::Id;
-use iced::mouse::Cursor;
 use iced::widget::canvas::{Cache, Geometry, Path};
-use iced::widget::{button, canvas, column, image, text, Image};
-use iced::window::{self, get_latest};
+use iced::widget::{canvas, column, image};
 use iced::{
-    Color, Element, Length, Point, Radians, Rectangle, Renderer, Size, Subscription, Task, Theme,
+    Color, Element, Length, Point, Radians, Rectangle, Renderer, Size, Task, Theme,
 };
-use iced_layershell::settings::{LayerShellSettings, Settings, StartMode};
+use iced_layershell::settings::{LayerShellSettings, Settings};
 use iced_layershell::{to_layer_message, Application};
+use std::process::Command;
 use std::sync::LazyLock;
 
 const PENGUIN: &[u8] = include_bytes!("../assets/pngwing.com.png");
@@ -16,22 +13,44 @@ static PENGUIN_HANDLE: LazyLock<image::Handle> =
     LazyLock::new(|| image::Handle::from_bytes(PENGUIN));
 
 fn main() {
+    let output = Command::new("sh")
+        .arg("-c")
+        .arg("xdpyinfo | grep dimensions")
+        .output()
+        .expect("Failed to execute command");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    let (width, height) = stdout
+        .split_whitespace()
+        .nth(1)
+        .and_then(|dimensions| {
+            let parts: Vec<&str> = dimensions.split('x').collect();
+            if parts.len() == 2 {
+                Some((parts[0].parse::<u32>().ok()?, parts[1].parse::<u32>().ok()?))
+            } else {
+                None
+            }
+        })
+        .expect("Failed to parse screen dimensions");
+
     AnimatePenguin::run(Settings {
+        flags: (width, height),
         layer_settings: LayerShellSettings {
-            size: Some((1900, 1080)),
+            size: Some((width, height)),
             events_transparent: true,
             ..Default::default()
         },
         ..Default::default()
     })
-    .unwrap()
+    .unwrap();
 }
 #[derive(Default)]
 struct AnimatePenguin {
     draw_cache: Cache,
     move_x: f32,
     move_y: f32,
-    screen_size: Size,
+    screen_size: (u32, u32),
 }
 
 #[to_layer_message]
@@ -45,18 +64,20 @@ impl Application for AnimatePenguin {
     type Executor = iced::executor::Default;
     type Message = Message;
     type Theme = Theme;
-    type Flags = ();
+    type Flags = (u32, u32);
 
     fn new(flags: Self::Flags) -> (Self, Task<Self::Message>) {
+        let bottom = flags.1 as f32 - 50.0f32;
         (
             Self {
-                move_y: 950.0,
+                screen_size: flags,
+                move_y: bottom,
                 ..Default::default()
             },
-            window::get_size(window::Id::unique()).map(|size| Message::ScreenSizeReceived(size)),
+            Task::none(),
         )
     }
-    fn style(&self, theme: &iced::Theme) -> iced_layershell::Appearance {
+    fn style(&self, _theme: &iced::Theme) -> iced_layershell::Appearance {
         use iced_layershell::Appearance;
         Appearance {
             background_color: Color::TRANSPARENT,
@@ -64,13 +85,8 @@ impl Application for AnimatePenguin {
         }
     }
     fn subscription(&self) -> iced::Subscription<Self::Message> {
-        // iced::time::every(std::time::Duration::from_millis(10))
-        //     .map(|_| Message::Tick)
-
-        iced::Subscription::batch(vec![iced::time::every(std::time::Duration::from_millis(
-            10,
-        ))
-        .map(|_| Message::Tick)])
+        iced::time::every(std::time::Duration::from_millis(10))
+            .map(|_| Message::Tick)
     }
 
     fn namespace(&self) -> String {
@@ -84,19 +100,11 @@ impl Application for AnimatePenguin {
                 self.draw_cache.clear();
                 Task::none()
             }
-
-            Message::ScreenSizeReceived(size) => {
-                
-                self.screen_size = size;
-                println!("{} {}", size.width, size.height);
-                Task::none()
-            }
             _ => todo!(),
         };
     }
 
     fn view(&self) -> Element<'_, Self::Message, Self::Theme, Renderer> {
-       
         column![canvas(self).height(Length::Fill).width(Length::Fill),].into()
     }
 }
@@ -127,7 +135,7 @@ impl<Message> canvas::Program<Message> for AnimatePenguin {
             frame.draw_image(
                 Rectangle {
                     x: self.move_x,
-                    y: 950.0,
+                    y: self.move_y,
                     width: 50.0,
                     height: 50.0,
                 },
