@@ -51,6 +51,7 @@ struct AnimatePenguin {
     move_x: f32,
     move_y: f32,
     screen_size: (u32, u32),
+    moving_right: bool,
 }
 
 #[to_layer_message]
@@ -96,7 +97,19 @@ impl Application for AnimatePenguin {
     fn update(&mut self, message: Self::Message) -> Task<Self::Message> {
         return match message {
             Message::Tick => {
-                self.move_x += 1.0;
+                let max_x = self.screen_size.0 as f32 - 60.0f32;
+                if self.move_x >= max_x {
+                    self.moving_right = false;
+                } else if self.move_x <= 0.0 {
+                    self.moving_right = true;
+                }
+
+                if self.moving_right {
+                    self.move_x += 2.0; 
+                } else {
+                    self.move_x -= 2.0;
+                }
+                println!("x: {}", self.move_x);
                 self.draw_cache.clear();
                 Task::none()
             }
