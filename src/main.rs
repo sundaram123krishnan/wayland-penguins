@@ -12,6 +12,10 @@ const PENGUIN: &[u8] = include_bytes!("../assets/pngwing.com.png");
 static PENGUIN_HANDLE: LazyLock<image::Handle> =
     LazyLock::new(|| image::Handle::from_bytes(PENGUIN));
 
+const PENGUIN1 : &[u8] = include_bytes!("../assets/linux.png");
+static PENGUIN1_HANDLE: LazyLock<image::Handle> =
+    LazyLock::new(|| image::Handle::from_bytes(PENGUIN1));
+
 fn main() {
     let output = Command::new("sh")
         .arg("-c")
@@ -52,6 +56,7 @@ struct AnimatePenguin {
     move_y: f32,
     screen_size: (u32, u32),
     moving_right: bool,
+    frame_counter: u32, 
 }
 
 #[to_layer_message]
@@ -86,7 +91,7 @@ impl Application for AnimatePenguin {
         }
     }
     fn subscription(&self) -> iced::Subscription<Self::Message> {
-        iced::time::every(std::time::Duration::from_millis(10))
+        iced::time::every(std::time::Duration::from_millis(100))
             .map(|_| Message::Tick)
     }
 
@@ -108,6 +113,11 @@ impl Application for AnimatePenguin {
                     self.move_x += 2.0; 
                 } else {
                     self.move_x -= 2.0;
+                }
+                self.frame_counter += 1; 
+
+                if self.frame_counter >= 5 { 
+                    self.frame_counter = 0;
                 }
                 println!("x: {}", self.move_x);
                 self.draw_cache.clear();
@@ -137,8 +147,14 @@ impl<Message> canvas::Program<Message> for AnimatePenguin {
             let background = Path::rectangle(Point::ORIGIN, bounds.size());
             frame.fill(&background, Color::TRANSPARENT);
 
+            let image_handle = if self.frame_counter < 2 {
+                &PENGUIN_HANDLE.clone()
+            } else {
+                &PENGUIN1_HANDLE.clone()
+            };
+
             let image = iced::advanced::image::Image {
-                handle: PENGUIN_HANDLE.clone(),
+                handle: image_handle.clone(),
                 filter_method: Default::default(),
                 rotation: Radians(0.0f32),
                 opacity: 1.0,
