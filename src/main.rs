@@ -1,6 +1,7 @@
 mod penguin;
 mod assets;
 mod screen;
+mod widgets;
 
 use penguin::AnimatePenguin;
 use screen::get_screen_dimensions;
@@ -14,7 +15,6 @@ fn main() {
         flags: (width, height),
         layer_settings: LayerShellSettings {
             size: Some((width, height)),
-            events_transparent: true,
             ..Default::default()
         },
         ..Default::default()
