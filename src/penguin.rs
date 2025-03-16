@@ -97,17 +97,19 @@ impl Application for AnimatePenguin {
     }
 
     fn view(&self) -> Element<'_, Self::Message, Self::Theme, Renderer> {
+        let x = (self.screen_size.0 as f32) / 2.5;
+        let y = (self.screen_size.1 as f32) / 2.5;
         let content = column![canvas(self).height(Length::Fill).width(Length::Fill),];
         if self.show_menu {
-            let menu = container(column![button("hello").on_press(Message::HideMenu)]).style(|theme|
-                container::Style {
+            let menu = container(column![button("hello").on_press(Message::HideMenu)])
+                .style(|theme| container::Style {
                     background: Some(iced::Background::Color(Color::WHITE)),
                     ..container::Style::default()
-                },
-            ).width(500.0).height(500.0);
+                })
+                .width(x as f32)
+                .height(y as f32);
             modal(content, menu, Message::HideMenu).into()
-        }
-        else {
+        } else {
             content.into()
         }
     }
