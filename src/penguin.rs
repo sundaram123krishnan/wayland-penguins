@@ -1,11 +1,10 @@
-use crate::assets::{PENGUIN_HANDLE, PENGUIN1_HANDLE};
+use crate::assets::{PENGUIN1_HANDLE, PENGUIN_HANDLE};
 use iced::widget::canvas::{Cache, Geometry, Path};
-use iced::widget::{canvas, column};
-use iced::{
-    Color, Element, Length, Point, Radians, Rectangle, Renderer, Size, Task, Theme,
-};
+use iced::widget::{button, canvas, column, container, text};
+use iced::{Color, Element, Length, Point, Radians, Rectangle, Renderer, Size, Task, Theme};
 use iced_layershell::{to_layer_message, Application};
 
+use crate::widgets::modal::modal;
 #[derive(Default)]
 pub struct AnimatePenguin {
     draw_cache: Cache,
@@ -13,7 +12,8 @@ pub struct AnimatePenguin {
     move_y: f32,
     screen_size: (u32, u32),
     moving_right: bool,
-    frame_counter: u32, 
+    frame_counter: u32,
+    show_menu: bool,
 }
 
 #[to_layer_message]
@@ -21,6 +21,8 @@ pub struct AnimatePenguin {
 pub enum Message {
     Tick,
     ScreenSizeReceived(Size),
+    ShowMenu,
+    HideMenu,
 }
 
 impl Application for AnimatePenguin {
@@ -34,6 +36,7 @@ impl Application for AnimatePenguin {
         (
             Self {
                 screen_size: flags,
+                show_menu: true,
                 move_y: bottom,
                 ..Default::default()
             },
@@ -50,8 +53,7 @@ impl Application for AnimatePenguin {
     }
 
     fn subscription(&self) -> iced::Subscription<Self::Message> {
-        iced::time::every(std::time::Duration::from_millis(100))
-            .map(|_| Message::Tick)
+        iced::time::every(std::time::Duration::from_millis(100)).map(|_| Message::Tick)
     }
 
     fn namespace(&self) -> String {
@@ -69,17 +71,25 @@ impl Application for AnimatePenguin {
                 }
 
                 if self.moving_right {
-                    self.move_x += 2.0; 
+                    self.move_x += 2.0;
                 } else {
                     self.move_x -= 2.0;
                 }
-                self.frame_counter += 1; 
+                self.frame_counter += 1;
 
-                if self.frame_counter >= 5 { 
+                if self.frame_counter >= 5 {
                     self.frame_counter = 0;
                 }
                 println!("x: {}", self.move_x);
                 self.draw_cache.clear();
+                Task::none()
+            }
+            Message::HideMenu => {
+                self.show_menu = false;
+                Task::none()
+            }
+            Message::ShowMenu => {
+                self.show_menu = true;
                 Task::none()
             }
             _ => todo!(),
@@ -87,7 +97,19 @@ impl Application for AnimatePenguin {
     }
 
     fn view(&self) -> Element<'_, Self::Message, Self::Theme, Renderer> {
-        column![canvas(self).height(Length::Fill).width(Length::Fill),].into()
+        let content = column![canvas(self).height(Length::Fill).width(Length::Fill),];
+        if self.show_menu {
+            let menu = container(column![button("hello").on_press(Message::HideMenu)]).style(|theme|
+                container::Style {
+                    background: Some(iced::Background::Color(Color::WHITE)),
+                    ..container::Style::default()
+                },
+            ).width(500.0).height(500.0);
+            modal(content, menu, Message::HideMenu).into()
+        }
+        else {
+            content.into()
+        }
     }
 }
 
