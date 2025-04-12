@@ -1,15 +1,17 @@
-mod penguin;
 mod assets;
+mod penguin;
 mod screen;
 mod widgets;
 
+use iced_layershell::{
+    settings::{LayerShellSettings, Settings},
+    Application,
+};
 use penguin::AnimatePenguin;
 use screen::get_screen_dimensions;
-use iced_layershell::{settings::{LayerShellSettings, Settings}, Application};
 
 fn main() {
-    let (width, height) = get_screen_dimensions()
-        .expect("Failed to get screen dimensions");
+    let (width, height) = get_screen_dimensions().expect("Failed to get screen dimensions");
 
     AnimatePenguin::run(Settings {
         flags: (width, height),

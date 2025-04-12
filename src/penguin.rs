@@ -1,19 +1,21 @@
-use crate::assets::{PENGUIN1_HANDLE, PENGUIN_HANDLE};
+use crate::assets::get_penguin_image;
 use iced::widget::canvas::{Cache, Geometry, Path};
-use iced::widget::{button, canvas, column, container, text};
+use iced::widget::{canvas, column, container, text};
 use iced::{Color, Element, Length, Point, Radians, Rectangle, Renderer, Size, Task, Theme};
 use iced_layershell::{to_layer_message, Application};
 
 use crate::widgets::modal::modal;
+
 #[derive(Default)]
 pub struct AnimatePenguin {
     draw_cache: Cache,
     move_x: f32,
     move_y: f32,
     screen_size: (u32, u32),
-    moving_right: bool,
-    frame_counter: u32,
     show_menu: bool,
+    frame_counter: usize,
+    sprite_height: f32,
+    sprite_width: f32,
 }
 
 #[to_layer_message]
@@ -23,6 +25,7 @@ pub enum Message {
     ScreenSizeReceived(Size),
     ShowMenu,
     HideMenu,
+    RestartAnimation,
 }
 
 impl Application for AnimatePenguin {
@@ -32,12 +35,14 @@ impl Application for AnimatePenguin {
     type Flags = (u32, u32);
 
     fn new(flags: Self::Flags) -> (Self, Task<Self::Message>) {
-        let bottom = flags.1 as f32 - 50.0f32;
+        let bottom = flags.1 as f32 - 60.0f32;
         (
             Self {
                 screen_size: flags,
                 show_menu: true,
                 move_y: bottom,
+                sprite_height: 60.0,
+                sprite_width: 60.0,
                 ..Default::default()
             },
             Task::none(),
@@ -53,7 +58,8 @@ impl Application for AnimatePenguin {
     }
 
     fn subscription(&self) -> iced::Subscription<Self::Message> {
-        iced::time::every(std::time::Duration::from_millis(100)).map(|_| Message::Tick)
+        iced::time::every(std::time::Duration::from_millis(16)).map(|_| Message::Tick)
+        // 1000ms / 16ms approx 60 fps
     }
 
     fn namespace(&self) -> String {
@@ -63,25 +69,16 @@ impl Application for AnimatePenguin {
     fn update(&mut self, message: Self::Message) -> Task<Self::Message> {
         return match message {
             Message::Tick => {
-                let max_x = self.screen_size.0 as f32 - 60.0f32;
-                if self.move_x >= max_x {
-                    self.moving_right = false;
-                } else if self.move_x <= 0.0 {
-                    self.moving_right = true;
-                }
+                if !self.show_menu {
+                    self.frame_counter += 1;
+                    if self.frame_counter==40 {
+                        self.frame_counter = 0;
+                    }
 
-                if self.moving_right {
-                    self.move_x += 2.0;
-                } else {
-                    self.move_x -= 2.0;
-                }
-                self.frame_counter += 1;
+                    self.move_x += 0.6;  
 
-                if self.frame_counter >= 5 {
-                    self.frame_counter = 0;
+                    self.draw_cache.clear();
                 }
-                println!("x: {}", self.move_x);
-                self.draw_cache.clear();
                 Task::none()
             }
             Message::HideMenu => {
@@ -92,7 +89,7 @@ impl Application for AnimatePenguin {
                 self.show_menu = true;
                 Task::none()
             }
-            _ => todo!(),
+            _ => Task::none(),
         };
     }
 
@@ -100,14 +97,22 @@ impl Application for AnimatePenguin {
         let x = (self.screen_size.0 as f32) / 2.5;
         let y = (self.screen_size.1 as f32) / 2.5;
         let content = column![canvas(self).height(Length::Fill).width(Length::Fill),];
+
         if self.show_menu {
-            let menu = container(column![button("hello").on_press(Message::HideMenu)])
-                .style(|theme| container::Style {
-                    background: Some(iced::Background::Color(Color::WHITE)),
+
+            // TODO
+            let menu = container(column![text("Penguin Walking Animation").size(24),].spacing(20))
+                .style(|_theme| container::Style {
+                    background: Some(iced::Background::Color(Color::from_rgba(
+                        1.0, 1.0, 1.0, 0.9,
+                    ))),
+                    text_color: Some(Color::BLACK),
                     ..container::Style::default()
                 })
                 .width(x as f32)
-                .height(y as f32);
+                .height(y as f32)
+                .padding(20);
+
             modal(content, menu, Message::HideMenu).into()
         } else {
             content.into()
@@ -130,14 +135,10 @@ impl<Message> canvas::Program<Message> for AnimatePenguin {
             let background = Path::rectangle(Point::ORIGIN, bounds.size());
             frame.fill(&background, Color::TRANSPARENT);
 
-            let image_handle = if self.frame_counter < 2 {
-                &PENGUIN_HANDLE.clone()
-            } else {
-                &PENGUIN1_HANDLE.clone()
-            };
+            let image_handle = get_penguin_image(self.frame_counter);
 
             let image = iced::advanced::image::Image {
-                handle: image_handle.clone(),
+                handle: image_handle,
                 filter_method: Default::default(),
                 rotation: Radians(0.0f32),
                 opacity: 1.0,
@@ -148,8 +149,8 @@ impl<Message> canvas::Program<Message> for AnimatePenguin {
                 Rectangle {
                     x: self.move_x,
                     y: self.move_y,
-                    width: 50.0,
-                    height: 50.0,
+                    width: self.sprite_height,
+                    height: self.sprite_width,
                 },
                 image,
             );
