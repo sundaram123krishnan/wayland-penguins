@@ -1,10 +1,9 @@
 use crate::assets::get_penguin_image;
+use crate::widgets::modal::modal;
 use iced::widget::canvas::{Cache, Geometry, Path};
-use iced::widget::{canvas, column, container, text};
+use iced::widget::{canvas, column, container, image, text};
 use iced::{Color, Element, Length, Point, Radians, Rectangle, Renderer, Size, Task, Theme};
 use iced_layershell::{to_layer_message, Application};
-
-use crate::widgets::modal::modal;
 
 #[derive(Default)]
 pub struct AnimatePenguin {
@@ -16,6 +15,22 @@ pub struct AnimatePenguin {
     frame_counter: usize,
     sprite_height: f32,
     sprite_width: f32,
+    right_walking_image_handle: Vec<image::Handle>,
+    right_to_front_image_handle: Vec<image::Handle>,
+    left_walking_image_handle: Vec<image::Handle>,
+    direction: AnimationState,
+    turn_point: f32,
+}
+
+#[derive(Default, PartialEq)]
+pub enum AnimationState {
+    RightToFront,
+    FrontToLeft,
+    LeftAnimation,
+    FrontTalking,
+    FrontToRight,
+    #[default]
+    RightAnimation,
 }
 
 #[to_layer_message]
@@ -28,6 +43,21 @@ pub enum Message {
     RestartAnimation,
 }
 
+impl AnimatePenguin {
+    pub fn x_pos(&mut self, animation_state: AnimationState) {
+        match animation_state {
+            AnimationState::RightAnimation => {
+                self.move_x += 0.6;
+            }
+            AnimationState::LeftAnimation => {
+                self.move_x -= 0.6;
+                self.turn_point -= 0.6;
+            }
+            _ => {}
+        }
+    }
+}
+
 impl Application for AnimatePenguin {
     type Executor = iced::executor::Default;
     type Message = Message;
@@ -36,13 +66,24 @@ impl Application for AnimatePenguin {
 
     fn new(flags: Self::Flags) -> (Self, Task<Self::Message>) {
         let bottom = flags.1 as f32 - 60.0f32;
+
+        let right_walking_image_handle = get_penguin_image(AnimationState::RightAnimation);
+        let right_to_front_image_handle = get_penguin_image(AnimationState::RightToFront);
+        let left_walking_image_handle = get_penguin_image(AnimationState::LeftAnimation);
+
         (
             Self {
                 screen_size: flags,
-                show_menu: true,
+                show_menu: false,
                 move_y: bottom,
                 sprite_height: 60.0,
                 sprite_width: 60.0,
+                frame_counter: 0,
+                right_walking_image_handle,
+                right_to_front_image_handle,
+                left_walking_image_handle,
+                turn_point: 400.0, // TODO: should be randomized
+                direction: AnimationState::RightAnimation,
                 ..Default::default()
             },
             Task::none(),
@@ -69,13 +110,21 @@ impl Application for AnimatePenguin {
     fn update(&mut self, message: Self::Message) -> Task<Self::Message> {
         return match message {
             Message::Tick => {
-                if !self.show_menu {
+                if !self.show_menu { 
+                    if self.move_x >= self.turn_point && self.turn_point > 1.0 {
+                        self.direction = AnimationState::LeftAnimation;
+                        self.x_pos(AnimationState::LeftAnimation);
+                    } else {
+                        self.turn_point = 400.0;
+                        self.direction = AnimationState::RightAnimation;
+                        self.x_pos(AnimationState::RightAnimation);
+                    }
+                    
                     self.frame_counter += 1;
-                    if self.frame_counter==40 {
+
+                    if self.frame_counter >= self.left_walking_image_handle.len() {
                         self.frame_counter = 0;
                     }
-
-                    self.move_x += 0.6;  
 
                     self.draw_cache.clear();
                 }
@@ -99,7 +148,6 @@ impl Application for AnimatePenguin {
         let content = column![canvas(self).height(Length::Fill).width(Length::Fill),];
 
         if self.show_menu {
-
             // TODO
             let menu = container(column![text("Penguin Walking Animation").size(24),].spacing(20))
                 .style(|_theme| container::Style {
@@ -135,7 +183,11 @@ impl<Message> canvas::Program<Message> for AnimatePenguin {
             let background = Path::rectangle(Point::ORIGIN, bounds.size());
             frame.fill(&background, Color::TRANSPARENT);
 
-            let image_handle = get_penguin_image(self.frame_counter);
+            let mut image_handle = self.right_walking_image_handle[self.frame_counter].clone();
+
+            if self.direction == AnimationState::LeftAnimation {
+                image_handle = self.left_walking_image_handle[self.frame_counter].clone();
+            }
 
             let image = iced::advanced::image::Image {
                 handle: image_handle,

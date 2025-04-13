@@ -17,6 +17,7 @@ fn main() {
         flags: (width, height),
         layer_settings: LayerShellSettings {
             size: Some((width, height)),
+            events_transparent: true,
             ..Default::default()
         },
         ..Default::default()
