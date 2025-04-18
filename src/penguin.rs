@@ -19,7 +19,8 @@ pub struct AnimatePenguin {
     right_to_front_image_handle: Vec<image::Handle>,
     left_walking_image_handle: Vec<image::Handle>,
     direction: AnimationState,
-    turn_point: f32,
+    counter: i32,
+    turn_point: i32,
 }
 
 #[derive(Default, PartialEq)]
@@ -47,11 +48,20 @@ impl AnimatePenguin {
     pub fn x_pos(&mut self, animation_state: AnimationState) {
         match animation_state {
             AnimationState::RightAnimation => {
+                self.counter += 1;
                 self.move_x += 0.6;
             }
             AnimationState::LeftAnimation => {
+                if self.move_x <= 1.0 {
+                    self.counter = 1;
+                    self.frame_counter = 0;
+                    return;
+                }
                 self.move_x -= 0.6;
-                self.turn_point -= 0.6;
+                self.counter += 1;
+            }
+            AnimationState::RightToFront => {
+                self.counter += 1;
             }
             _ => {}
         }
@@ -76,14 +86,15 @@ impl Application for AnimatePenguin {
                 screen_size: flags,
                 show_menu: false,
                 move_y: bottom,
-                sprite_height: 60.0,
-                sprite_width: 60.0,
+                sprite_height: 50.0,
+                sprite_width: 50.0,
                 frame_counter: 0,
                 right_walking_image_handle,
                 right_to_front_image_handle,
                 left_walking_image_handle,
-                turn_point: 400.0, // TODO: should be randomized
                 direction: AnimationState::RightAnimation,
+                counter: 0,
+                turn_point: 484,
                 ..Default::default()
             },
             Task::none(),
@@ -110,22 +121,24 @@ impl Application for AnimatePenguin {
     fn update(&mut self, message: Self::Message) -> Task<Self::Message> {
         return match message {
             Message::Tick => {
-                if !self.show_menu { 
-                    if self.move_x >= self.turn_point && self.turn_point > 1.0 {
+                if !self.show_menu {
+                    
+                    if self.counter > self.turn_point {
                         self.direction = AnimationState::LeftAnimation;
                         self.x_pos(AnimationState::LeftAnimation);
-                    } else {
-                        self.turn_point = 400.0;
+                        // 0.6 * 40 = 24, 
+                    } else if self.counter >= self.turn_point - 24 && self.counter <= self.turn_point {
+                        self.direction = AnimationState::RightToFront;
+                        self.x_pos(AnimationState::RightToFront);
+                    } else if self.counter < self.turn_point {
                         self.direction = AnimationState::RightAnimation;
                         self.x_pos(AnimationState::RightAnimation);
                     }
-                    
-                    self.frame_counter += 1;
 
-                    if self.frame_counter >= self.left_walking_image_handle.len() {
+                    self.frame_counter += 1;
+                    if self.frame_counter >= 40 {
                         self.frame_counter = 0;
                     }
-
                     self.draw_cache.clear();
                 }
                 Task::none()
@@ -185,8 +198,16 @@ impl<Message> canvas::Program<Message> for AnimatePenguin {
 
             let mut image_handle = self.right_walking_image_handle[self.frame_counter].clone();
 
-            if self.direction == AnimationState::LeftAnimation {
-                image_handle = self.left_walking_image_handle[self.frame_counter].clone();
+            match self.direction {
+                AnimationState::LeftAnimation => {
+                    image_handle = self.left_walking_image_handle[self.frame_counter].clone();
+                }
+                AnimationState::RightToFront => {
+                    image_handle = self.right_to_front_image_handle[self.frame_counter].clone();
+                }
+                _ => {
+                    image_handle = self.right_walking_image_handle[self.frame_counter].clone();
+                }
             }
 
             let image = iced::advanced::image::Image {
