@@ -12,18 +12,19 @@ pub struct AnimatePenguin {
     move_y: f32,
     screen_size: (u32, u32),
     show_menu: bool,
-    frame_counter: usize,
+    frame_counter: i32,
     sprite_height: f32,
     sprite_width: f32,
     right_walking_image_handle: Vec<image::Handle>,
     right_to_front_image_handle: Vec<image::Handle>,
     left_walking_image_handle: Vec<image::Handle>,
+    front_to_left_image_handle: Vec<image::Handle>,
     direction: AnimationState,
     counter: i32,
     turn_point: i32,
 }
 
-#[derive(Default, PartialEq)]
+#[derive(Default, PartialEq, Clone, Copy, Debug)]
 pub enum AnimationState {
     RightToFront,
     FrontToLeft,
@@ -63,6 +64,9 @@ impl AnimatePenguin {
             AnimationState::RightToFront => {
                 self.counter += 1;
             }
+            AnimationState::FrontToLeft => {
+                self.counter += 1;
+            }
             _ => {}
         }
     }
@@ -80,6 +84,7 @@ impl Application for AnimatePenguin {
         let right_walking_image_handle = get_penguin_image(AnimationState::RightAnimation);
         let right_to_front_image_handle = get_penguin_image(AnimationState::RightToFront);
         let left_walking_image_handle = get_penguin_image(AnimationState::LeftAnimation);
+        let front_to_left_image_handle = get_penguin_image(AnimationState::FrontToLeft);
 
         (
             Self {
@@ -93,8 +98,9 @@ impl Application for AnimatePenguin {
                 right_to_front_image_handle,
                 left_walking_image_handle,
                 direction: AnimationState::RightAnimation,
-                counter: 0,
-                turn_point: 484,
+                counter: 1,
+                front_to_left_image_handle,
+                turn_point: 100,
                 ..Default::default()
             },
             Task::none(),
@@ -121,24 +127,45 @@ impl Application for AnimatePenguin {
     fn update(&mut self, message: Self::Message) -> Task<Self::Message> {
         return match message {
             Message::Tick => {
+                /*
+                increment x by 0.6
+                total frames = 40
+                0.6 * 40 = 24 -> to play animation only once
+                 */
+
+                let total_frames = 40;
                 if !self.show_menu {
-                    
                     if self.counter > self.turn_point {
                         self.direction = AnimationState::LeftAnimation;
                         self.x_pos(AnimationState::LeftAnimation);
-                        // 0.6 * 40 = 24, 
-                    } else if self.counter >= self.turn_point - 24 && self.counter <= self.turn_point {
+                    } else if self.counter >= self.turn_point - 48
+                        && self.counter < self.turn_point - 24
+                    {
                         self.direction = AnimationState::RightToFront;
                         self.x_pos(AnimationState::RightToFront);
+                    } else if self.counter >= self.turn_point - 24
+                        && self.counter <= self.turn_point
+                    {
+                        self.direction = AnimationState::FrontToLeft;
+                        self.x_pos(AnimationState::FrontToLeft);
                     } else if self.counter < self.turn_point {
                         self.direction = AnimationState::RightAnimation;
                         self.x_pos(AnimationState::RightAnimation);
                     }
 
-                    self.frame_counter += 1;
-                    if self.frame_counter >= 40 {
-                        self.frame_counter = 0;
-                    }
+                    self.frame_counter = match self.direction {
+                        AnimationState::RightToFront => {
+                            // approximation to get index under 40
+                            let fc = ((self.counter - (self.turn_point - 48)) * total_frames) / 24;
+                            fc.min(39) 
+                        }
+                        AnimationState::FrontToLeft => {
+                            let fc = ((self.counter - (self.turn_point - 24)) * total_frames) / 24;
+                            fc.min(39)
+                        }
+                        _ => (self.counter + 1) % total_frames,
+                    };
+
                     self.draw_cache.clear();
                 }
                 Task::none()
@@ -196,17 +223,25 @@ impl<Message> canvas::Program<Message> for AnimatePenguin {
             let background = Path::rectangle(Point::ORIGIN, bounds.size());
             frame.fill(&background, Color::TRANSPARENT);
 
-            let mut image_handle = self.right_walking_image_handle[self.frame_counter].clone();
+            let mut image_handle =
+                self.right_walking_image_handle[self.frame_counter as usize].clone();
 
             match self.direction {
                 AnimationState::LeftAnimation => {
-                    image_handle = self.left_walking_image_handle[self.frame_counter].clone();
+                    image_handle =
+                        self.left_walking_image_handle[self.frame_counter as usize].clone();
                 }
                 AnimationState::RightToFront => {
-                    image_handle = self.right_to_front_image_handle[self.frame_counter].clone();
+                    image_handle =
+                        self.right_to_front_image_handle[self.frame_counter as usize].clone();
+                }
+                AnimationState::FrontToLeft => {
+                    image_handle =
+                        self.front_to_left_image_handle[self.frame_counter as usize].clone();
                 }
                 _ => {
-                    image_handle = self.right_walking_image_handle[self.frame_counter].clone();
+                    image_handle =
+                        self.right_walking_image_handle[self.frame_counter as usize].clone();
                 }
             }
 
