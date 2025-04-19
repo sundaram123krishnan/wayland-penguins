@@ -31,17 +31,15 @@ pub fn get_penguin_image(animation_state: AnimationState) -> Vec<image::Handle> 
                 paths.sort();
             }
         }
+        AnimationState::FrontToLeft => {
+            for asset in read_dir("assets/Front to Left Animation").unwrap() {
+                let asset_path = asset.unwrap().path();
+                paths.push(asset_path);
+                paths.sort();
+            }
+        }
         _ => todo!(),
     }
-
-    println!("{:?}", paths);
-    // right animation
-    // right to front
-    // front talking
-    // front to left
-    // left animation
-    // front talking
-    // front to right
 
     for image_path in paths {
         match read(&image_path) {
