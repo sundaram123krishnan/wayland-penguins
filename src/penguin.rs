@@ -20,6 +20,7 @@ pub struct AnimatePenguin {
     left_walking_image_handle: Vec<image::Handle>,
     front_to_left_image_handle: Vec<image::Handle>,
     left_to_front_image_handle: Vec<image::Handle>,
+    front_to_right_image_handle: Vec<image::Handle>,
     direction: AnimationState,
     counter: i32,
     turn_point: i32,
@@ -56,12 +57,13 @@ impl AnimatePenguin {
             }
             AnimationState::LeftAnimation => {
                 if self.move_x <= 1.0 {
-                    self.counter = 1;
+                    self.counter = 0;
                     self.frame_counter = 0;
                     return;
+                } else {
+                    self.move_x -= 0.6;
+                    self.counter += 1;
                 }
-                self.move_x -= 0.6;
-                self.counter += 1;
             }
             AnimationState::RightToFront => {
                 self.counter += 1;
@@ -70,6 +72,9 @@ impl AnimatePenguin {
                 self.counter += 1;
             }
             AnimationState::LeftToFront => {
+                self.counter += 1;
+            }
+            AnimationState::FrontToRight => {
                 self.counter += 1;
             }
             _ => {}
@@ -91,6 +96,7 @@ impl Application for AnimatePenguin {
         let left_walking_image_handle = get_penguin_image(AnimationState::LeftAnimation);
         let front_to_left_image_handle = get_penguin_image(AnimationState::FrontToLeft);
         let left_to_front_image_handle = get_penguin_image(AnimationState::LeftToFront);
+        let front_to_right_image_handle = get_penguin_image(AnimationState::FrontToRight);
 
         (
             Self {
@@ -103,10 +109,11 @@ impl Application for AnimatePenguin {
                 right_walking_image_handle,
                 right_to_front_image_handle,
                 left_walking_image_handle,
+                front_to_right_image_handle,
                 direction: AnimationState::RightAnimation,
-                counter: 1,
+                counter: 0,
                 front_to_left_image_handle,
-                turn_point: 100,
+                turn_point: 240,
                 left_to_front_image_handle,
                 ..Default::default()
             },
@@ -138,38 +145,39 @@ impl Application for AnimatePenguin {
 
                 if !self.show_menu {
                     println!("{:?}", self.counter);
-                    if self.counter > self.turn_point {
-                        self.direction = AnimationState::LeftAnimation;
-                        self.x_pos(AnimationState::LeftAnimation);
-                    }
 
-                    if self.counter >= 2 * self.turn_point - 60
-                        && self.counter <= 2 * self.turn_point - 60 + 24
+                    if self.counter >= (2 * self.turn_point - 60)
+                        && self.counter <= (2 * self.turn_point - 36)
                     {
                         self.direction = AnimationState::LeftToFront;
-                        self.x_pos(AnimationState::LeftToFront);
+                    } else if self.counter > (2 * self.turn_point - 36)
+                        && self.counter <= (2 * self.turn_point - 12)
+                    {
+                        self.direction = AnimationState::FrontToRight;
                     } else if self.counter >= self.turn_point - 48
                         && self.counter < self.turn_point - 24
                     {
                         self.direction = AnimationState::RightToFront;
-                        self.x_pos(AnimationState::RightToFront);
-                    } else if self.counter >= self.turn_point - 24
-                        && self.counter <= self.turn_point
+                    } else if self.counter >= self.turn_point - 24 && self.counter < self.turn_point
                     {
                         self.direction = AnimationState::FrontToLeft;
-                        self.x_pos(AnimationState::FrontToLeft);
-                    } else if self.counter < self.turn_point {
+                    } else if self.counter >= self.turn_point
+                        && self.counter < (2 * self.turn_point - 60)
+                    {
+                        self.direction = AnimationState::LeftAnimation;
+                    } else if self.direction == AnimationState::FrontToRight
+                        && self.counter > (2 * self.turn_point - 12)
+                    {
+                        self.counter = 0;
+                        self.move_x = 0.6;
                         self.direction = AnimationState::RightAnimation;
-                        self.x_pos(AnimationState::RightAnimation);
                     }
 
-                    /*
+                    // update counter at once
+                    self.x_pos(self.direction);
 
-                    500 - ? = 24
-                     */
                     self.frame_counter = match self.direction {
                         AnimationState::RightToFront => {
-                            // approximation to get index under 40
                             let fc = ((self.counter - (self.turn_point - 48)) * total_frames) / 24;
                             fc.min(39)
                         }
@@ -182,7 +190,12 @@ impl Application for AnimatePenguin {
                                 ((self.counter - (2 * self.turn_point - 60)) * total_frames) / 24;
                             fc.min(39)
                         }
-                        _ => (self.counter + 1) % total_frames,
+                        AnimationState::FrontToRight => {
+                            let fc =
+                                ((self.counter - (2 * self.turn_point - 36)) * total_frames) / 24;
+                            fc.min(39)
+                        }
+                        _ => self.counter % total_frames,
                     };
 
                     self.draw_cache.clear();
@@ -261,6 +274,10 @@ impl<Message> canvas::Program<Message> for AnimatePenguin {
                 AnimationState::LeftToFront => {
                     image_handle =
                         self.left_to_front_image_handle[self.frame_counter as usize].clone();
+                }
+                AnimationState::FrontToRight => {
+                    image_handle =
+                        self.front_to_right_image_handle[self.frame_counter as usize].clone();
                 }
                 _ => {
                     image_handle =
