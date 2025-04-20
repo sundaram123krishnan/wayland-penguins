@@ -10,14 +10,14 @@ pub fn get_penguin_image(animation_state: AnimationState) -> Vec<image::Handle> 
 
     match animation_state {
         AnimationState::RightAnimation => {
-            for asset in read_dir("assets/Right Animation").unwrap() {
+            for asset in read_dir("assets/Back-Forth Animation/Right Animation").unwrap() {
                 let asset_path = asset.unwrap().path();
                 paths.push(asset_path);
                 paths.sort();
             }
         }
         AnimationState::RightToFront => {
-            for asset in read_dir("assets/Front to Right Animation").unwrap() {
+            for asset in read_dir("assets/Back-Forth Animation/Front to Right Animation").unwrap() {
                 let asset_path = asset.unwrap().path();
                 paths.push(asset_path);
                 paths.sort();
@@ -25,14 +25,14 @@ pub fn get_penguin_image(animation_state: AnimationState) -> Vec<image::Handle> 
             }
         }
         AnimationState::LeftAnimation => {
-            for asset in read_dir("assets/Left Animation").unwrap() {
+            for asset in read_dir("assets/Back-Forth Animation/Left Animation").unwrap() {
                 let asset_path = asset.unwrap().path();
                 paths.push(asset_path);
                 paths.sort();
             }
         }
         AnimationState::FrontToLeft => {
-            for asset in read_dir("assets/Front to Left Animation").unwrap() {
+            for asset in read_dir("assets/Back-Forth Animation/Front to Left Animation").unwrap() {
                 let asset_path = asset.unwrap().path();
                 paths.push(asset_path);
                 paths.sort();
@@ -40,7 +40,7 @@ pub fn get_penguin_image(animation_state: AnimationState) -> Vec<image::Handle> 
         }
 
         AnimationState::LeftToFront => {
-            for asset in read_dir("assets/Front to Left Animation").unwrap() {
+            for asset in read_dir("assets/Back-Forth Animation/Front to Left Animation").unwrap() {
                 let asset_path = asset.unwrap().path();
                 paths.push(asset_path);
                 paths.sort();
@@ -49,7 +49,7 @@ pub fn get_penguin_image(animation_state: AnimationState) -> Vec<image::Handle> 
         }
 
         AnimationState::FrontToRight => {
-            for asset in read_dir("assets/Front to Right Animation").unwrap() {
+            for asset in read_dir("assets/Back-Forth Animation/Front to Right Animation").unwrap() {
                 let asset_path = asset.unwrap().path();
                 paths.push(asset_path);
                 paths.sort();
