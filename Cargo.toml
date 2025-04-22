@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 iced = { version = "0.13.1", features = ["image", "canvas", "advanced", "smol"] }
 iced_layershell = "0.13.5"
+rand = "0.9.1"
