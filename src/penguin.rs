@@ -4,6 +4,7 @@ use iced::widget::canvas::{Cache, Geometry, Path};
 use iced::widget::{canvas, column, container, image, text};
 use iced::{Color, Element, Length, Point, Radians, Rectangle, Renderer, Size, Task, Theme};
 use iced_layershell::{to_layer_message, Application};
+use rand::Rng;
 
 #[derive(Default)]
 pub struct AnimatePenguin {
@@ -59,6 +60,7 @@ impl AnimatePenguin {
                 if self.move_x <= 1.0 {
                     self.counter = 0;
                     self.frame_counter = 0;
+
                     return;
                 } else {
                     self.move_x -= 0.6;
@@ -82,6 +84,11 @@ impl AnimatePenguin {
     }
 }
 
+pub fn randomize_turn_point(screen_size_x: u32) -> i32 {
+    let mut rng = rand::rng();
+    rng.random_range(100..screen_size_x - 10) as i32 // not to overflow
+}
+
 impl Application for AnimatePenguin {
     type Executor = iced::executor::Default;
     type Message = Message;
@@ -89,7 +96,7 @@ impl Application for AnimatePenguin {
     type Flags = (u32, u32);
 
     fn new(flags: Self::Flags) -> (Self, Task<Self::Message>) {
-        let bottom = flags.1 as f32 - 60.0f32;
+        let bottom = flags.1 as f32 - 50.0f32;
 
         let right_walking_image_handle = get_penguin_image(AnimationState::RightAnimation);
         let right_to_front_image_handle = get_penguin_image(AnimationState::RightToFront);
@@ -97,6 +104,8 @@ impl Application for AnimatePenguin {
         let front_to_left_image_handle = get_penguin_image(AnimationState::FrontToLeft);
         let left_to_front_image_handle = get_penguin_image(AnimationState::LeftToFront);
         let front_to_right_image_handle = get_penguin_image(AnimationState::FrontToRight);
+
+        let turn_point = randomize_turn_point(flags.0);
 
         (
             Self {
@@ -113,7 +122,7 @@ impl Application for AnimatePenguin {
                 direction: AnimationState::RightAnimation,
                 counter: 0,
                 front_to_left_image_handle,
-                turn_point: 240,
+                turn_point,
                 left_to_front_image_handle,
                 ..Default::default()
             },
@@ -170,6 +179,7 @@ impl Application for AnimatePenguin {
                     {
                         self.counter = 0;
                         self.move_x = 0.6;
+                        self.turn_point = randomize_turn_point(self.screen_size.0);
                         self.direction = AnimationState::RightAnimation;
                     }
 
