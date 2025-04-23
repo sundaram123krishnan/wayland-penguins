@@ -9,6 +9,7 @@ use rand::Rng;
 #[derive(Default)]
 pub struct AnimatePenguin {
     draw_cache: Cache,
+    start_point: f32,
     move_x: f32,
     move_y: f32,
     screen_size: (u32, u32),
@@ -57,10 +58,12 @@ impl AnimatePenguin {
                 self.move_x += 0.6;
             }
             AnimationState::LeftAnimation => {
-                if self.move_x <= 1.0 {
+                if self.move_x <= self.start_point {
+                    self.turn_point = randomize_turn_point(self.screen_size.0);
+                    self.start_point = randomize_start_point(self.turn_point);
+                    self.direction = AnimationState::RightAnimation;
                     self.counter = 0;
                     self.frame_counter = 0;
-
                     return;
                 } else {
                     self.move_x -= 0.6;
@@ -86,7 +89,12 @@ impl AnimatePenguin {
 
 pub fn randomize_turn_point(screen_size_x: u32) -> i32 {
     let mut rng = rand::rng();
-    rng.random_range(100..screen_size_x - 10) as i32 // not to overflow
+    rng.random_range(100..600) as i32 // not to overflow
+}
+
+pub fn randomize_start_point(turn_point: i32) -> f32 {
+    let mut rng = rand::rng();
+    rng.random_range(0..turn_point - 100) as f32
 }
 
 impl Application for AnimatePenguin {
@@ -106,11 +114,13 @@ impl Application for AnimatePenguin {
         let front_to_right_image_handle = get_penguin_image(AnimationState::FrontToRight);
 
         let turn_point = randomize_turn_point(flags.0);
+        let start_point = randomize_start_point(turn_point);
 
         (
             Self {
                 screen_size: flags,
                 show_menu: false,
+                start_point,
                 move_y: bottom,
                 sprite_height: 50.0,
                 sprite_width: 50.0,
@@ -123,6 +133,7 @@ impl Application for AnimatePenguin {
                 counter: 0,
                 front_to_left_image_handle,
                 turn_point,
+                move_x: start_point,
                 left_to_front_image_handle,
                 ..Default::default()
             },
@@ -153,7 +164,7 @@ impl Application for AnimatePenguin {
                 let total_frames = 40;
 
                 if !self.show_menu {
-                    println!("{:?}", self.counter);
+                    // println!("{:?}", self.counter);
 
                     if self.counter >= (2 * self.turn_point - 60)
                         && self.counter <= (2 * self.turn_point - 36)
@@ -178,7 +189,7 @@ impl Application for AnimatePenguin {
                         && self.counter > (2 * self.turn_point - 12)
                     {
                         self.counter = 0;
-                        self.move_x = 0.6;
+                        self.move_x = randomize_start_point(self.turn_point);
                         self.turn_point = randomize_turn_point(self.screen_size.0);
                         self.direction = AnimationState::RightAnimation;
                     }
