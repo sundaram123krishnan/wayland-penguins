@@ -15,8 +15,10 @@ pub struct AnimatePenguin {
     screen_size: (u32, u32),
     show_menu: bool,
     frame_counter: i32,
+    previous_start_point: f32,
     sprite_height: f32,
     sprite_width: f32,
+    next_start_point: f32,
     right_walking_image_handle: Vec<image::Handle>,
     right_to_front_image_handle: Vec<image::Handle>,
     left_walking_image_handle: Vec<image::Handle>,
@@ -26,6 +28,7 @@ pub struct AnimatePenguin {
     direction: AnimationState,
     counter: i32,
     turn_point: i32,
+    should_go_left: bool,
 }
 
 #[derive(Default, PartialEq, Clone, Copy, Debug)]
@@ -54,8 +57,13 @@ impl AnimatePenguin {
     pub fn x_pos(&mut self, animation_state: AnimationState) {
         match animation_state {
             AnimationState::RightAnimation => {
-                self.counter += 1;
-                self.move_x += 0.6;
+                if self.should_go_left && self.counter >= 30 {
+                    self.counter = self.turn_point - 48;
+                    self.should_go_left = false;
+                } else {
+                    self.move_x += 0.6;
+                    self.counter += 1;
+                }
             }
             AnimationState::LeftAnimation => {
                 if self.move_x <= self.start_point {
@@ -89,12 +97,16 @@ impl AnimatePenguin {
 
 pub fn randomize_turn_point(screen_size_x: u32) -> i32 {
     let mut rng = rand::rng();
-    rng.random_range(100..600) as i32 // not to overflow
+    rng.random_range(100..600) as i32
 }
 
 pub fn randomize_start_point(turn_point: i32) -> f32 {
     let mut rng = rand::rng();
-    rng.random_range(0..turn_point - 100) as f32
+    if turn_point <= 100 {
+        0.0
+    } else {
+        rng.random_range(0..turn_point - 100) as f32
+    }
 }
 
 impl Application for AnimatePenguin {
@@ -125,10 +137,13 @@ impl Application for AnimatePenguin {
                 sprite_height: 50.0,
                 sprite_width: 50.0,
                 frame_counter: 0,
+                previous_start_point: start_point,
+                next_start_point: start_point,
                 right_walking_image_handle,
                 right_to_front_image_handle,
                 left_walking_image_handle,
                 front_to_right_image_handle,
+                should_go_left: false,
                 direction: AnimationState::RightAnimation,
                 counter: 0,
                 front_to_left_image_handle,
@@ -189,9 +204,12 @@ impl Application for AnimatePenguin {
                         && self.counter > (2 * self.turn_point - 12)
                     {
                         self.counter = 0;
-                        self.move_x = randomize_start_point(self.turn_point);
+                        self.previous_start_point = self.start_point;
+                        self.next_start_point = randomize_start_point(self.turn_point);
+                        self.start_point = self.next_start_point;
                         self.turn_point = randomize_turn_point(self.screen_size.0);
                         self.direction = AnimationState::RightAnimation;
+                        self.should_go_left = self.previous_start_point > self.next_start_point;
                     }
 
                     // update counter at once
