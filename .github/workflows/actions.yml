@@ -1,0 +1,29 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build Binary
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy rustfmt
+      - name: Install Deps
+        run: pacman -Syu --noconfirm base-devel git sudo libxkbcommon wayland alsa-lib alsa-utils
+      - name: Run fmt check
+        run: cargo fmt --all -- --check
+      - name: Run clippy check
+        run: cargo clippy
+      - name: Run tests
+        run: cargo test --verbose

@@ -3,7 +3,9 @@ use iced::widget::{column, container, text};
 use iced::{Color, Element, Renderer, Size, Task, Theme};
 use iced_layershell::{to_layer_message, Application};
 
-use crate::animations::back_forth_animation::back_forth_animation::{BackAndForthAnimation, BackAndForthAnimationMessage};
+use crate::animations::back_forth_animation::back_forth_animation::{
+    BackAndForthAnimation, BackAndForthAnimationMessage,
+};
 
 #[derive(Default)]
 pub struct AnimatePenguin {
