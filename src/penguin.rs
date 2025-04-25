@@ -1,112 +1,24 @@
-use crate::assets::get_penguin_image;
 use crate::widgets::modal::modal;
-use iced::widget::canvas::{Cache, Geometry, Path};
-use iced::widget::{canvas, column, container, image, text};
-use iced::{Color, Element, Length, Point, Radians, Rectangle, Renderer, Size, Task, Theme};
+use iced::widget::{column, container, text};
+use iced::{Color, Element, Renderer, Size, Task, Theme};
 use iced_layershell::{to_layer_message, Application};
-use rand::Rng;
+
+use crate::animations::back_forth_animation::back_forth_animation::{BackAndForthAnimation, BackAndForthAnimationMessage};
 
 #[derive(Default)]
 pub struct AnimatePenguin {
-    draw_cache: Cache,
-    start_point: f32,
-    move_x: f32,
-    move_y: f32,
-    screen_size: (u32, u32),
     show_menu: bool,
-    frame_counter: i32,
-    previous_start_point: f32,
-    sprite_height: f32,
-    sprite_width: f32,
-    next_start_point: f32,
-    right_walking_image_handle: Vec<image::Handle>,
-    right_to_front_image_handle: Vec<image::Handle>,
-    left_walking_image_handle: Vec<image::Handle>,
-    front_to_left_image_handle: Vec<image::Handle>,
-    left_to_front_image_handle: Vec<image::Handle>,
-    front_to_right_image_handle: Vec<image::Handle>,
-    direction: AnimationState,
-    counter: i32,
-    turn_point: i32,
-    should_go_left: bool,
-}
-
-#[derive(Default, PartialEq, Clone, Copy, Debug)]
-pub enum AnimationState {
-    RightToFront,
-    FrontToLeft,
-    LeftAnimation,
-    FrontTalking,
-    FrontToRight,
-    LeftToFront,
-    #[default]
-    RightAnimation,
+    screen_size: (u32, u32),
+    back_and_forth_animation: BackAndForthAnimation,
 }
 
 #[to_layer_message]
 #[derive(Debug, Clone)]
 pub enum Message {
-    Tick,
+    BackAndForthMessage(BackAndForthAnimationMessage),
     ScreenSizeReceived(Size),
     ShowMenu,
     HideMenu,
-    RestartAnimation,
-}
-
-impl AnimatePenguin {
-    pub fn x_pos(&mut self, animation_state: AnimationState) {
-        match animation_state {
-            AnimationState::RightAnimation => {
-                if self.should_go_left && self.counter >= 30 {
-                    self.counter = self.turn_point - 48;
-                    self.should_go_left = false;
-                } else {
-                    self.move_x += 0.6;
-                    self.counter += 1;
-                }
-            }
-            AnimationState::LeftAnimation => {
-                if self.move_x <= self.start_point {
-                    self.turn_point = randomize_turn_point(self.screen_size.0);
-                    self.start_point = randomize_start_point(self.turn_point);
-                    self.direction = AnimationState::RightAnimation;
-                    self.counter = 0;
-                    self.frame_counter = 0;
-                    return;
-                } else {
-                    self.move_x -= 0.6;
-                    self.counter += 1;
-                }
-            }
-            AnimationState::RightToFront => {
-                self.counter += 1;
-            }
-            AnimationState::FrontToLeft => {
-                self.counter += 1;
-            }
-            AnimationState::LeftToFront => {
-                self.counter += 1;
-            }
-            AnimationState::FrontToRight => {
-                self.counter += 1;
-            }
-            _ => {}
-        }
-    }
-}
-
-pub fn randomize_turn_point(screen_size_x: u32) -> i32 {
-    let mut rng = rand::rng();
-    rng.random_range(100..600) as i32
-}
-
-pub fn randomize_start_point(turn_point: i32) -> f32 {
-    let mut rng = rand::rng();
-    if turn_point <= 100 {
-        0.0
-    } else {
-        rng.random_range(0..turn_point - 100) as f32
-    }
 }
 
 impl Application for AnimatePenguin {
@@ -116,40 +28,13 @@ impl Application for AnimatePenguin {
     type Flags = (u32, u32);
 
     fn new(flags: Self::Flags) -> (Self, Task<Self::Message>) {
-        let bottom = flags.1 as f32 - 50.0f32;
-
-        let right_walking_image_handle = get_penguin_image(AnimationState::RightAnimation);
-        let right_to_front_image_handle = get_penguin_image(AnimationState::RightToFront);
-        let left_walking_image_handle = get_penguin_image(AnimationState::LeftAnimation);
-        let front_to_left_image_handle = get_penguin_image(AnimationState::FrontToLeft);
-        let left_to_front_image_handle = get_penguin_image(AnimationState::LeftToFront);
-        let front_to_right_image_handle = get_penguin_image(AnimationState::FrontToRight);
-
-        let turn_point = randomize_turn_point(flags.0);
-        let start_point = randomize_start_point(turn_point);
+        let screen_size = flags;
 
         (
             Self {
-                screen_size: flags,
                 show_menu: false,
-                start_point,
-                move_y: bottom,
-                sprite_height: 50.0,
-                sprite_width: 50.0,
-                frame_counter: 0,
-                previous_start_point: start_point,
-                next_start_point: start_point,
-                right_walking_image_handle,
-                right_to_front_image_handle,
-                left_walking_image_handle,
-                front_to_right_image_handle,
-                should_go_left: false,
-                direction: AnimationState::RightAnimation,
-                counter: 0,
-                front_to_left_image_handle,
-                turn_point,
-                move_x: start_point,
-                left_to_front_image_handle,
+                screen_size,
+                back_and_forth_animation: BackAndForthAnimation::new(flags),
                 ..Default::default()
             },
             Task::none(),
@@ -165,7 +50,7 @@ impl Application for AnimatePenguin {
     }
 
     fn subscription(&self) -> iced::Subscription<Self::Message> {
-        iced::time::every(std::time::Duration::from_millis(16)).map(|_| Message::Tick)
+        self.back_and_forth_animation.subscription()
         // 1000ms / 16ms approx 60 fps
     }
 
@@ -175,72 +60,6 @@ impl Application for AnimatePenguin {
 
     fn update(&mut self, message: Self::Message) -> Task<Self::Message> {
         return match message {
-            Message::Tick => {
-                let total_frames = 40;
-
-                if !self.show_menu {
-                    // println!("{:?}", self.counter);
-
-                    if self.counter >= (2 * self.turn_point - 60)
-                        && self.counter <= (2 * self.turn_point - 36)
-                    {
-                        self.direction = AnimationState::LeftToFront;
-                    } else if self.counter > (2 * self.turn_point - 36)
-                        && self.counter <= (2 * self.turn_point - 12)
-                    {
-                        self.direction = AnimationState::FrontToRight;
-                    } else if self.counter >= self.turn_point - 48
-                        && self.counter < self.turn_point - 24
-                    {
-                        self.direction = AnimationState::RightToFront;
-                    } else if self.counter >= self.turn_point - 24 && self.counter < self.turn_point
-                    {
-                        self.direction = AnimationState::FrontToLeft;
-                    } else if self.counter >= self.turn_point
-                        && self.counter < (2 * self.turn_point - 60)
-                    {
-                        self.direction = AnimationState::LeftAnimation;
-                    } else if self.direction == AnimationState::FrontToRight
-                        && self.counter > (2 * self.turn_point - 12)
-                    {
-                        self.counter = 0;
-                        self.previous_start_point = self.start_point;
-                        self.next_start_point = randomize_start_point(self.turn_point);
-                        self.start_point = self.next_start_point;
-                        self.turn_point = randomize_turn_point(self.screen_size.0);
-                        self.direction = AnimationState::RightAnimation;
-                        self.should_go_left = self.previous_start_point > self.next_start_point;
-                    }
-
-                    // update counter at once
-                    self.x_pos(self.direction);
-
-                    self.frame_counter = match self.direction {
-                        AnimationState::RightToFront => {
-                            let fc = ((self.counter - (self.turn_point - 48)) * total_frames) / 24;
-                            fc.min(39)
-                        }
-                        AnimationState::FrontToLeft => {
-                            let fc = ((self.counter - (self.turn_point - 24)) * total_frames) / 24;
-                            fc.min(39)
-                        }
-                        AnimationState::LeftToFront => {
-                            let fc =
-                                ((self.counter - (2 * self.turn_point - 60)) * total_frames) / 24;
-                            fc.min(39)
-                        }
-                        AnimationState::FrontToRight => {
-                            let fc =
-                                ((self.counter - (2 * self.turn_point - 36)) * total_frames) / 24;
-                            fc.min(39)
-                        }
-                        _ => self.counter % total_frames,
-                    };
-
-                    self.draw_cache.clear();
-                }
-                Task::none()
-            }
             Message::HideMenu => {
                 self.show_menu = false;
                 Task::none()
@@ -249,6 +68,7 @@ impl Application for AnimatePenguin {
                 self.show_menu = true;
                 Task::none()
             }
+            Message::BackAndForthMessage(msg) => self.back_and_forth_animation.update(msg),
             _ => Task::none(),
         };
     }
@@ -256,7 +76,7 @@ impl Application for AnimatePenguin {
     fn view(&self) -> Element<'_, Self::Message, Self::Theme, Renderer> {
         let x = (self.screen_size.0 as f32) / 2.5;
         let y = (self.screen_size.1 as f32) / 2.5;
-        let content = column![canvas(self).height(Length::Fill).width(Length::Fill),];
+        let content = self.back_and_forth_animation.view();
 
         if self.show_menu {
             // TODO
@@ -276,73 +96,5 @@ impl Application for AnimatePenguin {
         } else {
             content.into()
         }
-    }
-}
-
-impl<Message> canvas::Program<Message> for AnimatePenguin {
-    type State = ();
-
-    fn draw(
-        &self,
-        _state: &Self::State,
-        renderer: &Renderer,
-        _theme: &Theme,
-        bounds: Rectangle,
-        _cursor: iced::mouse::Cursor,
-    ) -> Vec<Geometry> {
-        let screen = self.draw_cache.draw(renderer, bounds.size(), |frame| {
-            let background = Path::rectangle(Point::ORIGIN, bounds.size());
-            frame.fill(&background, Color::TRANSPARENT);
-
-            let mut image_handle =
-                self.right_walking_image_handle[self.frame_counter as usize].clone();
-
-            match self.direction {
-                AnimationState::LeftAnimation => {
-                    image_handle =
-                        self.left_walking_image_handle[self.frame_counter as usize].clone();
-                }
-                AnimationState::RightToFront => {
-                    image_handle =
-                        self.right_to_front_image_handle[self.frame_counter as usize].clone();
-                }
-                AnimationState::FrontToLeft => {
-                    image_handle =
-                        self.front_to_left_image_handle[self.frame_counter as usize].clone();
-                }
-                AnimationState::LeftToFront => {
-                    image_handle =
-                        self.left_to_front_image_handle[self.frame_counter as usize].clone();
-                }
-                AnimationState::FrontToRight => {
-                    image_handle =
-                        self.front_to_right_image_handle[self.frame_counter as usize].clone();
-                }
-                _ => {
-                    image_handle =
-                        self.right_walking_image_handle[self.frame_counter as usize].clone();
-                }
-            }
-
-            let image = iced::advanced::image::Image {
-                handle: image_handle,
-                filter_method: Default::default(),
-                rotation: Radians(0.0f32),
-                opacity: 1.0,
-                snap: false,
-            };
-
-            frame.draw_image(
-                Rectangle {
-                    x: self.move_x,
-                    y: self.move_y,
-                    width: self.sprite_height,
-                    height: self.sprite_width,
-                },
-                image,
-            );
-        });
-
-        vec![screen]
     }
 }

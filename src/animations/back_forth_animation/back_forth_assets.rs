@@ -1,55 +1,63 @@
 use iced::widget::image;
-use std::fs::{read, read_dir};
+use std::{
+    env,
+    fs::{read, read_dir},
+};
 
-use crate::penguin::AnimationState;
+use crate::animations::back_forth_animation::back_forth_animation::BackAndForthAnimationState;
 
-pub fn get_penguin_image(animation_state: AnimationState) -> Vec<image::Handle> {
+pub fn get_penguin_image(animation_state: BackAndForthAnimationState) -> Vec<image::Handle> {
     let mut iced_image_handle: Vec<image::Handle> = Vec::new();
 
     let mut paths = Vec::new();
 
+    let path = env::current_dir().unwrap();
+    let root = path.parent().unwrap().parent().unwrap();
+
+    let assets_dir = root.join("assets").join("Back-Forth Animation");
+
     match animation_state {
-        AnimationState::RightAnimation => {
-            for asset in read_dir("assets/Back-Forth Animation/Right Animation").unwrap() {
+        BackAndForthAnimationState::RightAnimation => {
+            for asset in read_dir(assets_dir.join("Right Animation")).unwrap() {
                 let asset_path = asset.unwrap().path();
                 paths.push(asset_path);
                 paths.sort();
             }
         }
-        AnimationState::RightToFront => {
-            for asset in read_dir("assets/Back-Forth Animation/Front to Right Animation").unwrap() {
-                let asset_path = asset.unwrap().path();
-                paths.push(asset_path);
-                paths.sort();
-                paths.reverse();
-            }
-        }
-        AnimationState::LeftAnimation => {
-            for asset in read_dir("assets/Back-Forth Animation/Left Animation").unwrap() {
-                let asset_path = asset.unwrap().path();
-                paths.push(asset_path);
-                paths.sort();
-            }
-        }
-        AnimationState::FrontToLeft => {
-            for asset in read_dir("assets/Back-Forth Animation/Front to Left Animation").unwrap() {
-                let asset_path = asset.unwrap().path();
-                paths.push(asset_path);
-                paths.sort();
-            }
-        }
-
-        AnimationState::LeftToFront => {
-            for asset in read_dir("assets/Back-Forth Animation/Front to Left Animation").unwrap() {
+        BackAndForthAnimationState::RightToFront => {
+            for asset in read_dir(assets_dir.join("Front to Right Animation")).unwrap() {
                 let asset_path = asset.unwrap().path();
                 paths.push(asset_path);
                 paths.sort();
                 paths.reverse();
             }
         }
+        BackAndForthAnimationState::LeftAnimation => {
+            for asset in read_dir(assets_dir.join("Left Animation")).unwrap() {
+                let asset_path = asset.unwrap().path();
+                paths.push(asset_path);
+                paths.sort();
+            }
+        }
+        BackAndForthAnimationState::FrontToLeft => {
+            for asset in read_dir(assets_dir.join("Front to Left Animation")).unwrap() {
+                let asset_path = asset.unwrap().path();
+                paths.push(asset_path);
+                paths.sort();
+            }
+        }
 
-        AnimationState::FrontToRight => {
-            for asset in read_dir("assets/Back-Forth Animation/Front to Right Animation").unwrap() {
+        BackAndForthAnimationState::LeftToFront => {
+            for asset in read_dir(assets_dir.join("Front to Left Animation")).unwrap() {
+                let asset_path = asset.unwrap().path();
+                paths.push(asset_path);
+                paths.sort();
+                paths.reverse();
+            }
+        }
+
+        BackAndForthAnimationState::FrontToRight => {
+            for asset in read_dir(assets_dir.join("Front to Right Animation")).unwrap() {
                 let asset_path = asset.unwrap().path();
                 paths.push(asset_path);
                 paths.sort();

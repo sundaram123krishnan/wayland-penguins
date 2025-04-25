@@ -1,4 +1,4 @@
-mod assets;
+mod animations;
 mod penguin;
 mod screen;
 mod widgets;
