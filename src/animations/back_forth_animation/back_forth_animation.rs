@@ -192,7 +192,10 @@ impl BackAndForthAnimation {
             println!("Old start point is : {:?}", self.start_point);
             self.turn_point = randomize_turn_point(self.screen_size.0);
             self.start_point = randomize_start_point(self.turn_point);
-            println!("New start poing is : {:?}, current position is: {:?}", self.start_point, self.current_pos_x);
+            println!(
+                "New start poing is : {:?}, current position is: {:?}",
+                self.start_point, self.current_pos_x
+            );
             self.direction = BackAndForthAnimationState::RightAnimation;
             self.counter = 0;
             self.frame_counter = 0;
