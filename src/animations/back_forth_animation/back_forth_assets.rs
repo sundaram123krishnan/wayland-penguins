@@ -11,8 +11,7 @@ pub fn get_penguin_image(animation_state: BackAndForthAnimationState) -> Vec<ima
 
     let mut paths = Vec::new();
 
-    let path = env::current_dir().unwrap();
-    let root = path.parent().unwrap().parent().unwrap();
+    let root = env::current_dir().unwrap();
 
     let assets_dir = root.join("assets").join("Back-Forth Animation");
 
