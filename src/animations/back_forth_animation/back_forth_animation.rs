@@ -30,6 +30,7 @@ pub struct BackAndForthAnimation {
     sprite_height: f32,
     sprite_width: f32,
     next_start_point: f32,
+    animation_speed: f32,
     right_walking_image_handle: Vec<image::Handle>,
     right_to_front_image_handle: Vec<image::Handle>,
     left_walking_image_handle: Vec<image::Handle>,
@@ -76,6 +77,7 @@ impl BackAndForthAnimation {
             screen_size,
             previous_start_point: start_point,
             next_start_point: start_point,
+            animation_speed: 1.0,
             right_walking_image_handle: get_penguin_image(
                 BackAndForthAnimationState::RightAnimation,
             ),
@@ -180,20 +182,22 @@ impl BackAndForthAnimation {
             self.counter = self.turn_point - 48;
             self.should_go_left = false;
         } else {
-            self.current_pos_x += 0.6;
+            self.current_pos_x += self.animation_speed;
             self.counter += 1;
         }
     }
 
     fn update_left_animation_position(&mut self) {
         if self.current_pos_x <= self.start_point {
+            println!("Old start point is : {:?}", self.start_point);
             self.turn_point = randomize_turn_point(self.screen_size.0);
             self.start_point = randomize_start_point(self.turn_point);
+            println!("New start poing is : {:?}, current position is: {:?}", self.start_point, self.current_pos_x);
             self.direction = BackAndForthAnimationState::RightAnimation;
             self.counter = 0;
             self.frame_counter = 0;
         } else {
-            self.current_pos_x -= 0.6;
+            self.current_pos_x -= self.animation_speed;
             self.counter += 1;
         }
     }
