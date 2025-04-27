@@ -50,16 +50,12 @@ pub enum BackAndForthAnimationMessage {
 
 fn randomize_turn_point(screen_size_x: u32) -> i32 {
     let mut rng = rand::rng();
-    rng.random_range(100..600) as i32
+    rng.random_range(300..screen_size_x - 50) as i32
 }
 
 fn randomize_start_point(turn_point: i32) -> f32 {
     let mut rng = rand::rng();
-    if turn_point <= 100 {
-        0.0
-    } else {
-        rng.random_range(0..turn_point - 100) as f32
-    }
+    rng.random_range(5..turn_point - 300) as f32
 }
 
 impl BackAndForthAnimation {
@@ -153,6 +149,7 @@ impl BackAndForthAnimation {
         self.counter >= self.turn_point && self.counter < (2 * self.turn_point - 60)
     }
 
+    // whenever animation is going from front-right, reset
     fn should_reset_animation(&self) -> bool {
         self.direction == BackAndForthAnimationState::FrontToRight
             && self.counter > (2 * self.turn_point - 12)
@@ -173,6 +170,14 @@ impl BackAndForthAnimation {
         match self.direction {
             BackAndForthAnimationState::RightAnimation => self.update_right_animation_position(),
             BackAndForthAnimationState::LeftAnimation => self.update_left_animation_position(),
+            BackAndForthAnimationState::FrontToLeft => {
+                self.current_pos_x -= self.animation_speed * 0.5; // move current position when turning
+                self.counter += 1;
+            }
+            BackAndForthAnimationState::FrontToRight => {
+                self.current_pos_x += self.animation_speed * 0.5; // still move the current position when turning
+                self.counter += 1;
+            }
             _ => self.counter += 1,
         }
     }
@@ -189,20 +194,10 @@ impl BackAndForthAnimation {
 
     fn update_left_animation_position(&mut self) {
         if self.current_pos_x <= self.start_point {
-            println!("Old start point is : {:?}", self.start_point);
-            self.turn_point = randomize_turn_point(self.screen_size.0);
-            self.start_point = randomize_start_point(self.turn_point);
-            println!(
-                "New start poing is : {:?}, current position is: {:?}",
-                self.start_point, self.current_pos_x
-            );
-            self.direction = BackAndForthAnimationState::RightAnimation;
-            self.counter = 0;
-            self.frame_counter = 0;
-        } else {
-            self.current_pos_x -= self.animation_speed;
-            self.counter += 1;
+            self.counter = 2 * self.turn_point - 60;
         }
+        self.current_pos_x -= self.animation_speed;
+        self.counter += 1;
     }
 
     fn update_frame_counter(&mut self) {
