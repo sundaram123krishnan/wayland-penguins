@@ -1,24 +1,21 @@
+use crate::animations::animation::{Animation, AnimationMessage};
 use crate::widgets::modal::modal;
 use iced::widget::{column, container, text};
-use iced::{Color, Element, Renderer, Size, Task, Theme};
+use iced::{Color, Element, Renderer, Size, Subscription, Task, Theme};
 use iced_layershell::{to_layer_message, Application};
 
-use crate::animations::back_forth_animation::back_forth_animation::{
-    BackAndForthAnimation, BackAndForthAnimationMessage,
-};
 
-#[derive(Default)]
 pub struct AnimatePenguin {
     show_menu: bool,
     screen_size: (u32, u32),
-    back_and_forth_animation: BackAndForthAnimation,
+    animation: Animation,
 }
 
 #[to_layer_message]
 #[derive(Debug, Clone)]
 pub enum Message {
-    BackAndForthMessage(BackAndForthAnimationMessage),
     ScreenSizeReceived(Size),
+    PlayAnimationMessage(AnimationMessage),
     ShowMenu,
     HideMenu,
 }
@@ -36,8 +33,7 @@ impl Application for AnimatePenguin {
             Self {
                 show_menu: false,
                 screen_size,
-                back_and_forth_animation: BackAndForthAnimation::new(flags),
-                ..Default::default()
+                animation: Animation::new(flags),
             },
             Task::none(),
         )
@@ -52,7 +48,10 @@ impl Application for AnimatePenguin {
     }
 
     fn subscription(&self) -> iced::Subscription<Self::Message> {
-        self.back_and_forth_animation.subscription()
+        Subscription::batch(vec![
+            self.animation.subscription()
+            
+        ])
         // 1000ms / 16ms approx 60 fps
     }
 
@@ -70,7 +69,7 @@ impl Application for AnimatePenguin {
                 self.show_menu = true;
                 Task::none()
             }
-            Message::BackAndForthMessage(msg) => self.back_and_forth_animation.update(msg),
+            Message::PlayAnimationMessage(msg) => self.animation.update(msg),
             _ => Task::none(),
         };
     }
@@ -78,7 +77,7 @@ impl Application for AnimatePenguin {
     fn view(&self) -> Element<'_, Self::Message, Self::Theme, Renderer> {
         let x = (self.screen_size.0 as f32) / 2.5;
         let y = (self.screen_size.1 as f32) / 2.5;
-        let content = self.back_and_forth_animation.view();
+        let content = self.animation.view();
 
         if self.show_menu {
             // TODO
