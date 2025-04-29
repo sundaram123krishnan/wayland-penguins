@@ -1,8 +1,8 @@
+use crate::animations::animation::AnimationMessage;
 use crate::animations::back_forth_animation::back_forth_assets::get_penguin_image;
 use crate::penguin::Message;
-use iced::widget::canvas::{Cache, Geometry, Path};
-use iced::widget::{canvas, column, image};
-use iced::{Color, Element, Length, Point, Radians, Rectangle, Renderer, Task, Theme};
+use iced::widget::image;
+use iced::Task;
 use rand::Rng;
 
 // The animation states of the sprite
@@ -20,15 +20,14 @@ pub enum BackAndForthAnimationState {
 
 #[derive(Default)]
 pub struct BackAndForthAnimation {
-    draw_cache: Cache,
     start_point: f32,
     screen_size: (u32, u32),
-    current_pos_x: f32, // current x-coord position of the penguin
-    current_pos_y: f32, // current y-coord position of the penguin
+    pub current_pos_x: f32, // current x-coord position of the penguin
+    pub current_pos_y: f32, // current y-coord position of the penguin
     frame_counter: i32, // to play frames -> stays between 0 - 40 (as we have 40 frames for each animation)
     previous_start_point: f32,
-    sprite_height: f32,
-    sprite_width: f32,
+    pub sprite_height: f32,
+    pub sprite_width: f32,
     next_start_point: f32,
     animation_speed: f32,
     right_walking_image_handle: Vec<image::Handle>,
@@ -91,14 +90,7 @@ impl BackAndForthAnimation {
             counter: 0,
             turn_point,
             current_pos_x: 0.0,
-            draw_cache: Default::default(),
         }
-    }
-
-    pub fn subscription(&self) -> iced::Subscription<Message> {
-        iced::time::every(std::time::Duration::from_millis(16))
-            .map(|_| Message::BackAndForthMessage(BackAndForthAnimationMessage::Tick))
-        // 1000ms / 16ms approx 60 fps
     }
 
     pub fn update(&mut self, message: BackAndForthAnimationMessage) -> Task<Message> {
@@ -107,10 +99,17 @@ impl BackAndForthAnimation {
                 self.update_animation_state();
                 self.update_position();
                 self.update_frame_counter();
-                self.draw_cache.clear();
                 Task::none()
             }
         }
+    }
+
+    pub fn subscription(&self) -> iced::Subscription<Message> {
+        iced::time::every(std::time::Duration::from_millis(16)).map(|_| {
+            Message::PlayAnimationMessage(AnimationMessage::BackAndForthMessage(
+                BackAndForthAnimationMessage::Tick,
+            ))
+        })
     }
 
     fn update_animation_state(&mut self) {
@@ -225,12 +224,7 @@ impl BackAndForthAnimation {
         };
     }
 
-    pub fn view(&self) -> Element<Message> {
-        let content = column![canvas(self).height(Length::Fill).width(Length::Fill)];
-        content.into()
-    }
-
-    fn get_current_image_handle(&self) -> image::Handle {
+    pub fn get_current_image_handle(&self) -> image::Handle {
         match self.direction {
             BackAndForthAnimationState::LeftAnimation => {
                 self.left_walking_image_handle[self.frame_counter as usize].clone()
@@ -249,45 +243,5 @@ impl BackAndForthAnimation {
             }
             _ => self.right_walking_image_handle[self.frame_counter as usize].clone(),
         }
-    }
-}
-
-impl<Message> canvas::Program<Message> for BackAndForthAnimation {
-    type State = ();
-
-    fn draw(
-        &self,
-        _state: &Self::State,
-        renderer: &Renderer,
-        _theme: &Theme,
-        bounds: Rectangle,
-        _cursor: iced::mouse::Cursor,
-    ) -> Vec<Geometry> {
-        let screen = self.draw_cache.draw(renderer, bounds.size(), |frame| {
-            let background = Path::rectangle(Point::ORIGIN, bounds.size());
-            frame.fill(&background, Color::TRANSPARENT);
-
-            let image_handle = self.get_current_image_handle();
-
-            let image = iced::advanced::image::Image {
-                handle: image_handle,
-                filter_method: Default::default(),
-                rotation: Radians(0.0f32),
-                opacity: 1.0,
-                snap: false,
-            };
-
-            frame.draw_image(
-                Rectangle {
-                    x: self.current_pos_x,
-                    y: self.current_pos_y,
-                    width: self.sprite_height,
-                    height: self.sprite_width,
-                },
-                image,
-            );
-        });
-
-        vec![screen]
     }
 }
