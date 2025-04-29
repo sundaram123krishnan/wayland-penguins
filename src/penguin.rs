@@ -4,7 +4,6 @@ use iced::widget::{column, container, text};
 use iced::{Color, Element, Renderer, Size, Subscription, Task, Theme};
 use iced_layershell::{to_layer_message, Application};
 
-
 pub struct AnimatePenguin {
     show_menu: bool,
     screen_size: (u32, u32),
@@ -48,10 +47,7 @@ impl Application for AnimatePenguin {
     }
 
     fn subscription(&self) -> iced::Subscription<Self::Message> {
-        Subscription::batch(vec![
-            self.animation.subscription()
-            
-        ])
+        Subscription::batch(vec![self.animation.subscription()])
         // 1000ms / 16ms approx 60 fps
     }
 
