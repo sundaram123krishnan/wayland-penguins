@@ -77,6 +77,8 @@ impl<Message> canvas::Program<Message> for Animation {
 
             if self.balloon_animation.landed {
                 let image_handle = self.back_and_forth_animation.get_current_image_handle();
+                let balloon_image_handle = self.balloon_animation.balloon_without_penguin.clone();
+
                 let image = iced::advanced::image::Image {
                     handle: image_handle,
                     filter_method: Default::default(),
@@ -84,6 +86,15 @@ impl<Message> canvas::Program<Message> for Animation {
                     opacity: 1.0,
                     snap: false,
                 };
+
+                let balloon_image = iced::advanced::image::Image {
+                    handle: balloon_image_handle,
+                    filter_method: Default::default(),
+                    rotation: Radians(0.0f32),
+                    opacity: 1.0,
+                    snap: false,
+                };
+
                 frame.draw_image(
                     Rectangle {
                         x: self.back_and_forth_animation.current_pos_x,
@@ -92,6 +103,16 @@ impl<Message> canvas::Program<Message> for Animation {
                         height: self.back_and_forth_animation.sprite_width,
                     },
                     image,
+                );
+
+                frame.draw_image(
+                    Rectangle {
+                        x: self.balloon_animation.current_pos_x,
+                        y: self.balloon_animation.current_pos_y,
+                        width: self.balloon_animation.sprite_height,
+                        height: self.balloon_animation.sprite_width,
+                    },
+                    balloon_image,
                 );
             } else {
                 let balloon_image_handle = self.balloon_animation.balloon_with_penguin.clone();
