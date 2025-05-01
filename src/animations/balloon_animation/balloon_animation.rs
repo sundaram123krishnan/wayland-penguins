@@ -57,12 +57,12 @@ impl BalloonAnimation {
         match message {
             BalloonAnimationMessage::Tick => {
                 if !self.landed {
-                    // have a falling effect
-                    self.hover_offset = 8.0 * (self.current_pos_y * 0.02).sin();
+                    self.hover_offset = 5.0 * (self.current_pos_y * 0.04).sin();
+
                     self.current_pos_y += self.descent_speed;
 
-                    let drift_speed = 1.2;
-                    let drift = drift_speed * (self.current_pos_y * 0.01).cos();
+                    let drift_speed = 0.8;
+                    let drift = drift_speed * (self.current_pos_y * 0.015).cos();
                     self.current_pos_x += drift;
 
                     if self.current_pos_y >= self.landing_y {
@@ -71,8 +71,18 @@ impl BalloonAnimation {
                         self.with_penguin = false;
                     }
                 } else {
+                    self.landed = true;
                     self.hover_offset = 5.0 * (self.current_pos_y * 0.04).cos();
-                    self.current_pos_y = self.landing_y + self.hover_offset;
+
+                    self.current_pos_y -= 0.7;
+
+                    let drift_speed = 0.8;
+                    let drift = drift_speed * (self.current_pos_y * 0.015).sin();
+                    self.current_pos_x += drift;
+
+                    if self.current_pos_y <= -self.sprite_height {
+                        self.current_pos_y = -self.sprite_height;
+                    }
                 }
 
                 Task::none()
