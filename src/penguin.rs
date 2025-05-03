@@ -3,11 +3,12 @@ use crate::widgets::modal::modal;
 use iced::widget::{column, container, text};
 use iced::{Color, Element, Size, Subscription, Task};
 use iced_layershell::to_layer_message;
-
+use std::sync::OnceLock;
 pub struct AnimatePenguin {
     show_menu: bool,
-    screen_size: (u32, u32),
-    animation: Animation,
+    screen_size: Option<Size>,
+    animation: Option<Animation>,
+    mainwindow: OnceLock<iced::window::Id>,
 }
 
 #[to_layer_message]
@@ -17,32 +18,36 @@ pub enum Message {
     PlayAnimationMessage(AnimationMessage),
     ShowMenu,
     HideMenu,
+    LatestWindow(Option<iced::window::Id>),
+    SizeUpdate(iced::Size),
 }
 
 impl AnimatePenguin {
-    pub fn new(flags: (u32, u32)) -> (Self, Task<Message>) {
-        let screen_size = flags;
-
+    pub fn new() -> (Self, Task<Message>) {
         (
             Self {
+                mainwindow: OnceLock::new(),
                 show_menu: false,
-                screen_size,
-                animation: Animation::new(flags),
+                screen_size: None,
+                animation: None,
             },
-            Task::none(),
+            iced::window::get_latest().map(Message::LatestWindow),
         )
     }
 
-    pub fn style(&self, _theme: &iced::Theme) -> iced_layershell::Appearance {
-        use iced_layershell::Appearance;
-        Appearance {
+    pub fn style(&self, _theme: &iced::Theme) -> iced::theme::Style {
+        use iced::theme::Style;
+        Style {
             background_color: Color::TRANSPARENT,
             text_color: Color::WHITE,
         }
     }
 
     pub fn subscription(&self) -> iced::Subscription<Message> {
-        Subscription::batch(vec![self.animation.subscription()])
+        match &self.animation {
+            Some(animation) => animation.subscription(),
+            None => Subscription::none(),
+        }
         // 1000ms / 16ms approx 60 fps
     }
 
@@ -60,15 +65,37 @@ impl AnimatePenguin {
                 self.show_menu = true;
                 Task::none()
             }
-            Message::PlayAnimationMessage(msg) => self.animation.update(msg),
+            Message::PlayAnimationMessage(msg) => match &mut self.animation {
+                Some(animation) => animation.update(msg),
+                None => Task::none(),
+            },
+            Message::LatestWindow(id) => {
+                let id = id.expect("must can get one");
+                self.mainwindow.set(id).expect("We just set once");
+                iced::window::get_size(id).map(Message::SizeUpdate)
+            }
+            Message::SizeUpdate(size) => {
+                println!("{size:?}");
+                self.animation = Some(Animation::new((size.width as u32, size.height as u32)));
+
+                self.screen_size = Some(size);
+                Task::none()
+            }
             _ => Task::none(),
         };
     }
 
     pub fn view(&self) -> Element<Message> {
-        let x = (self.screen_size.0 as f32) / 2.5;
-        let y = (self.screen_size.1 as f32) / 2.5;
-        let content = self.animation.view();
+        let Some(screen_size) = self.screen_size else {
+            return text("").into();
+        };
+        let Some(animation) = &self.animation else {
+            return text("").into();
+        };
+        let x = screen_size.width / 2.5;
+        let y = screen_size.height / 2.5;
+
+        let content = animation.view();
 
         if self.show_menu {
             // TODO

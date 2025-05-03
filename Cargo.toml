@@ -4,6 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-iced = { version = "0.13.1", features = ["image", "canvas", "advanced", "smol"] }
-iced_layershell = "0.13.5"
+iced = { git = "https://github.com/iced-rs/iced", features = [
+	"image",
+	"canvas",
+	"advanced",
+	"smol",
+] }
+iced_runtime = { git = "https://github.com/iced-rs/iced" }
+iced_layershell = { git = "https://github.com/waycrate/exwlshelleventloop", branch = "iced14", package = "iced_layershell" }
 rand = "0.9.1"

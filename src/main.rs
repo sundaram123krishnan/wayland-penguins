@@ -1,17 +1,13 @@
 mod animations;
 mod penguin;
-mod screen;
 mod widgets;
 
 use iced_layershell::{reexport::Anchor, settings::LayerShellSettings};
 
 use iced_layershell::build_pattern::application;
 use penguin::AnimatePenguin;
-use screen::get_screen_dimensions;
 
 fn main() {
-    let (width, height) = get_screen_dimensions().expect("Failed to get screen dimensions");
-
     application(
         AnimatePenguin::namespace,
         AnimatePenguin::update,
@@ -26,6 +22,6 @@ fn main() {
         events_transparent: true,
         ..Default::default()
     })
-    .run_with(move || AnimatePenguin::new((width, height)))
+    .run_with(|| AnimatePenguin::new())
     .unwrap();
 }
