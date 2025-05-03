@@ -51,7 +51,7 @@ impl AnimatePenguin {
         // 1000ms / 16ms approx 60 fps
     }
 
-    pub fn namespace(&self) -> String {
+    pub fn namespace() -> String {
         String::from("Penguins Animation")
     }
 
