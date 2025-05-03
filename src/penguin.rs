@@ -1,8 +1,8 @@
 use crate::animations::animation::{Animation, AnimationMessage};
 use crate::widgets::modal::modal;
 use iced::widget::{column, container, text};
-use iced::{Color, Element, Renderer, Size, Subscription, Task, Theme};
-use iced_layershell::{to_layer_message, Application};
+use iced::{Color, Element, Size, Subscription, Task};
+use iced_layershell::to_layer_message;
 
 pub struct AnimatePenguin {
     show_menu: bool,
@@ -19,13 +19,8 @@ pub enum Message {
     HideMenu,
 }
 
-impl Application for AnimatePenguin {
-    type Executor = iced::executor::Default;
-    type Message = Message;
-    type Theme = Theme;
-    type Flags = (u32, u32);
-
-    fn new(flags: Self::Flags) -> (Self, Task<Self::Message>) {
+impl AnimatePenguin {
+    pub fn new(flags: (u32, u32)) -> (Self, Task<Message>) {
         let screen_size = flags;
 
         (
@@ -38,7 +33,7 @@ impl Application for AnimatePenguin {
         )
     }
 
-    fn style(&self, _theme: &iced::Theme) -> iced_layershell::Appearance {
+    pub fn style(&self, _theme: &iced::Theme) -> iced_layershell::Appearance {
         use iced_layershell::Appearance;
         Appearance {
             background_color: Color::TRANSPARENT,
@@ -46,16 +41,16 @@ impl Application for AnimatePenguin {
         }
     }
 
-    fn subscription(&self) -> iced::Subscription<Self::Message> {
+    pub fn subscription(&self) -> iced::Subscription<Message> {
         Subscription::batch(vec![self.animation.subscription()])
         // 1000ms / 16ms approx 60 fps
     }
 
-    fn namespace(&self) -> String {
+    pub fn namespace(&self) -> String {
         String::from("Penguins Animation")
     }
 
-    fn update(&mut self, message: Self::Message) -> Task<Self::Message> {
+    pub fn update(&mut self, message: Message) -> Task<Message> {
         return match message {
             Message::HideMenu => {
                 self.show_menu = false;
@@ -70,7 +65,7 @@ impl Application for AnimatePenguin {
         };
     }
 
-    fn view(&self) -> Element<'_, Self::Message, Self::Theme, Renderer> {
+    pub fn view(&self) -> Element<Message> {
         let x = (self.screen_size.0 as f32) / 2.5;
         let y = (self.screen_size.1 as f32) / 2.5;
         let content = self.animation.view();

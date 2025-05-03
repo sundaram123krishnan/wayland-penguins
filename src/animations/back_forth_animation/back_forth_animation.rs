@@ -6,6 +6,7 @@ use iced::Task;
 use rand::Rng;
 
 // The animation states of the sprite
+#[allow(unused)]
 #[derive(Default, PartialEq)]
 pub enum BackAndForthAnimationState {
     RightToFront,
