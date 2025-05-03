@@ -4,7 +4,7 @@ mod widgets;
 
 use iced_layershell::{reexport::Anchor, settings::LayerShellSettings};
 
-use iced_layershell::build_pattern::application;
+use iced_layershell::application;
 use penguin::AnimatePenguin;
 
 fn main() {
