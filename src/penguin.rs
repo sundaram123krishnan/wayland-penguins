@@ -75,7 +75,6 @@ impl AnimatePenguin {
                 iced::window::get_size(id).map(Message::SizeUpdate)
             }
             Message::SizeUpdate(size) => {
-                println!("{size:?}");
                 self.animation = Some(Animation::new((size.width as u32, size.height as u32)));
 
                 self.screen_size = Some(size);
