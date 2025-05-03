@@ -9,6 +9,7 @@ use penguin::AnimatePenguin;
 
 fn main() {
     application(
+        AnimatePenguin::new,
         AnimatePenguin::namespace,
         AnimatePenguin::update,
         AnimatePenguin::view,
@@ -22,6 +23,6 @@ fn main() {
         events_transparent: true,
         ..Default::default()
     })
-    .run_with(|| AnimatePenguin::new())
+    .run()
     .unwrap();
 }
