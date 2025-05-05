@@ -13,3 +13,4 @@ iced = { git = "https://github.com/iced-rs/iced", features = [
 iced_runtime = { git = "https://github.com/iced-rs/iced" }
 iced_layershell = { git = "https://github.com/waycrate/exwlshelleventloop", branch = "iced14", package = "iced_layershell" }
 rand = "0.9.1"
+tracing-subscriber = "0.3.19"
