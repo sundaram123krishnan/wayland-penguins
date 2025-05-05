@@ -67,7 +67,7 @@ impl Animation {
 
         iced::Subscription::batch(vec![
             back_and_forth_subscription,
-            iced::time::every(std::time::Duration::from_millis(10))
+            iced::time::every(std::time::Duration::from_millis(16))
                 .map(|_| Message::PlayAnimationMessage(AnimationMessage::Tick)),
             balloon_animation_subscription,
         ])
