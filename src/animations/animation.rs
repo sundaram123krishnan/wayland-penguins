@@ -12,10 +12,12 @@ use super::{
     balloon_animation::balloon_animation::{BalloonAnimation, BalloonAnimationMessage},
 };
 
+use std::cell::RefCell;
 pub struct Animation {
     draw_cache: Cache,
-    back_and_forth_animation: BackAndForthAnimation,
+    back_and_forth_animation: RefCell<BackAndForthAnimation>,
     balloon_animation: BalloonAnimation,
+    balloon_landed: RefCell<bool>,
 }
 
 #[derive(Debug, Clone)]
@@ -28,9 +30,10 @@ pub enum AnimationMessage {
 impl Animation {
     pub fn new(screen_size: (u32, u32)) -> Self {
         Self {
-            back_and_forth_animation: BackAndForthAnimation::new(screen_size),
+            back_and_forth_animation: RefCell::new(BackAndForthAnimation::new(screen_size)),
             balloon_animation: BalloonAnimation::new(screen_size),
             draw_cache: Default::default(),
+            balloon_landed: RefCell::new(false),
         }
     }
 
@@ -40,14 +43,16 @@ impl Animation {
                 self.draw_cache.clear();
                 Task::none()
             }
-            AnimationMessage::BackAndForthMessage(msg) => self.back_and_forth_animation.update(msg),
+            AnimationMessage::BackAndForthMessage(msg) => {
+                self.back_and_forth_animation.borrow_mut().update(msg)
+            }
             AnimationMessage::BalloonMessage(msg) => self.balloon_animation.update(msg),
         }
     }
 
     pub fn subscription(&self) -> iced::Subscription<Message> {
         iced::Subscription::batch(vec![
-            self.back_and_forth_animation.subscription(),
+            self.back_and_forth_animation.borrow().subscription(),
             iced::time::every(std::time::Duration::from_millis(16))
                 .map(|_| Message::PlayAnimationMessage(AnimationMessage::Tick)),
             self.balloon_animation.subscription(),
@@ -76,7 +81,15 @@ impl<Message> canvas::Program<Message> for Animation {
             frame.fill(&background, Color::TRANSPARENT);
 
             if self.balloon_animation.landed {
-                let image_handle = self.back_and_forth_animation.get_current_image_handle();
+                if *self.balloon_landed.borrow() == false {
+                    *self.balloon_landed.borrow_mut() = true;
+                    self.back_and_forth_animation.borrow_mut().current_pos_x =
+                        self.balloon_animation.current_pos_x;
+                }
+                let image_handle = self
+                    .back_and_forth_animation
+                    .borrow()
+                    .get_current_image_handle();
                 let balloon_image_handle = self.balloon_animation.balloon_without_penguin.clone();
 
                 let image = iced::advanced::image::Image {
@@ -97,10 +110,10 @@ impl<Message> canvas::Program<Message> for Animation {
 
                 frame.draw_image(
                     Rectangle {
-                        x: self.back_and_forth_animation.current_pos_x,
-                        y: self.back_and_forth_animation.current_pos_y,
-                        width: self.back_and_forth_animation.sprite_height,
-                        height: self.back_and_forth_animation.sprite_width,
+                        x: self.back_and_forth_animation.borrow().current_pos_x,
+                        y: self.back_and_forth_animation.borrow().current_pos_y,
+                        width: self.back_and_forth_animation.borrow().sprite_height,
+                        height: self.back_and_forth_animation.borrow().sprite_width,
                     },
                     image,
                 );
