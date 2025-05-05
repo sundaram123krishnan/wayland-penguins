@@ -8,6 +8,8 @@ use iced_layershell::application;
 use penguin::AnimatePenguin;
 
 fn main() {
+    tracing_subscriber::fmt::init();
+
     application(
         AnimatePenguin::namespace,
         AnimatePenguin::update,
