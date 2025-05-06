@@ -30,12 +30,12 @@ pub enum AnimationMessage {
 
 impl Animation {
     pub fn new(screen_size: (u32, u32)) -> Self {
-        let back_and_forth_animation: Vec<BackAndForthAnimation> = (0..3)
+        let back_and_forth_animation: Vec<BackAndForthAnimation> = (0..4)
             .map(|_| BackAndForthAnimation::new(screen_size))
             .collect();
 
         let balloon_animation: Vec<BalloonAnimation> =
-            (0..3).map(|_| BalloonAnimation::new(screen_size)).collect();
+            (0..4).map(|_| BalloonAnimation::new(screen_size)).collect();
         Self {
             back_and_forth_animation,
             balloon_animation,
@@ -50,20 +50,20 @@ impl Animation {
                 Task::none()
             }
             AnimationMessage::BackAndForthMessage(msg) => Task::batch(
-                (0..3).map(|idx| self.back_and_forth_animation[idx].update(msg.clone())),
+                (0..4).map(|idx| self.back_and_forth_animation[idx].update(msg.clone())),
             ),
             AnimationMessage::BalloonMessage(msg) => {
-                Task::batch((0..3).map(|idx| self.balloon_animation[idx].update(msg.clone())))
+                Task::batch((0..4).map(|idx| self.balloon_animation[idx].update(msg.clone())))
             }
         }
     }
 
     pub fn subscription(&self) -> iced::Subscription<Message> {
         let back_and_forth_subscription = Subscription::batch(
-            (0..3).map(|idx| self.back_and_forth_animation[idx].subscription()),
+            (0..4).map(|idx| self.back_and_forth_animation[idx].subscription()),
         );
         let balloon_animation_subscription =
-            Subscription::batch((0..3).map(|idx| self.balloon_animation[idx].subscription()));
+            Subscription::batch((0..4).map(|idx| self.balloon_animation[idx].subscription()));
 
         iced::Subscription::batch(vec![
             back_and_forth_subscription,
@@ -79,43 +79,46 @@ impl Animation {
     }
 
     fn draw_balloon_and_penguin(&self, frame: &mut Frame<Renderer>, idx: usize) {
-        let image_handle = self.back_and_forth_animation[idx].get_current_image_handle();
-        let image = iced::advanced::image::Image {
-            handle: image_handle,
-            filter_method: Default::default(),
-            rotation: Radians(0.0f32),
-            opacity: 2.0,
-            snap: false,
-        };
+        if self.balloon_animation[idx].landed {
+            let image_handle = self.back_and_forth_animation[idx].get_current_image_handle();
+            let image = iced::advanced::image::Image {
+                handle: image_handle,
+                filter_method: Default::default(),
+                rotation: Radians(0.0f32),
+                opacity: 2.0,
+                snap: false,
+            };
 
-        frame.draw_image(
-            Rectangle {
-                x: self.back_and_forth_animation[idx].current_pos_x,
-                y: self.back_and_forth_animation[idx].current_pos_y,
-                width: self.back_and_forth_animation[idx].sprite_height,
-                height: self.back_and_forth_animation[idx].sprite_width,
-            },
-            image,
-        );
+            frame.draw_image(
+                Rectangle {
+                    x: self.back_and_forth_animation[idx].current_pos_x,
+                    y: self.back_and_forth_animation[idx].current_pos_y,
+                    width: self.back_and_forth_animation[idx].sprite_height,
+                    height: self.back_and_forth_animation[idx].sprite_width,
+                },
+                image,
+            );
 
-        let balloon_image_handle = self.balloon_animation[idx].balloon_without_penguin.clone();
-        let balloon_image = iced::advanced::image::Image {
-            handle: balloon_image_handle,
-            filter_method: Default::default(),
-            rotation: Radians(0.0f32),
-            opacity: 2.0,
-            snap: false,
-        };
+            let balloon_image_handle = self.balloon_animation[idx].balloon_without_penguin.clone();
+            let balloon_image = iced::advanced::image::Image {
+                handle: balloon_image_handle,
+                filter_method: Default::default(),
+                rotation: Radians(0.0f32),
+                opacity: 2.0,
+                snap: false,
+            };
 
-        frame.draw_image(
-            Rectangle {
-                x: self.balloon_animation[idx].current_pos_x,
-                y: self.balloon_animation[idx].current_pos_y,
-                width: self.balloon_animation[idx].sprite_height,
-                height: self.balloon_animation[idx].sprite_width,
-            },
-            balloon_image,
-        );
+            frame.draw_image(
+                Rectangle {
+                    x: self.balloon_animation[idx].current_pos_x,
+                    y: self.balloon_animation[idx].current_pos_y,
+                    width: self.balloon_animation[idx].sprite_height,
+                    height: self.balloon_animation[idx].sprite_width,
+                },
+                balloon_image,
+            );
+        }
+
         let balloon_image_handle = self.balloon_animation[idx].balloon_with_penguin.clone();
         let balloon_image = iced::advanced::image::Image {
             handle: balloon_image_handle,
@@ -154,6 +157,7 @@ impl<Message> canvas::Program<Message> for Animation {
             self.draw_balloon_and_penguin(frame, 0);
             self.draw_balloon_and_penguin(frame, 1);
             self.draw_balloon_and_penguin(frame, 2);
+            self.draw_balloon_and_penguin(frame, 3);
         });
 
         vec![screen]
