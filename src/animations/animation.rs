@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::vec;
 
 use crate::penguin::Message;
@@ -17,8 +18,9 @@ use super::{
 
 pub struct Animation {
     draw_cache: Cache,
-    back_and_forth_animation: Vec<BackAndForthAnimation>,
+    back_and_forth_animation: Vec<RefCell<BackAndForthAnimation>>,
     balloon_animation: Vec<BalloonAnimation>,
+    balloon_landed: Vec<RefCell<bool>>,
 }
 
 #[derive(Debug, Clone)]
@@ -30,8 +32,8 @@ pub enum AnimationMessage {
 
 impl Animation {
     pub fn new(screen_size: (u32, u32)) -> Self {
-        let back_and_forth_animation: Vec<BackAndForthAnimation> = (0..4)
-            .map(|_| BackAndForthAnimation::new(screen_size))
+        let back_and_forth_animation: Vec<RefCell<BackAndForthAnimation>> = (0..4)
+            .map(|_| RefCell::new(BackAndForthAnimation::new(screen_size)))
             .collect();
 
         let balloon_animation: Vec<BalloonAnimation> =
@@ -39,6 +41,7 @@ impl Animation {
         Self {
             back_and_forth_animation,
             balloon_animation,
+            balloon_landed: (0..4).map(|_| RefCell::new(false)).collect(),
             draw_cache: Default::default(),
         }
     }
@@ -49,9 +52,11 @@ impl Animation {
                 self.draw_cache.clear();
                 Task::none()
             }
-            AnimationMessage::BackAndForthMessage(msg) => Task::batch(
-                (0..4).map(|idx| self.back_and_forth_animation[idx].update(msg.clone())),
-            ),
+            AnimationMessage::BackAndForthMessage(msg) => Task::batch((0..4).map(|idx| {
+                self.back_and_forth_animation[idx]
+                    .borrow_mut()
+                    .update(msg.clone())
+            })),
             AnimationMessage::BalloonMessage(msg) => {
                 Task::batch((0..4).map(|idx| self.balloon_animation[idx].update(msg.clone())))
             }
@@ -59,9 +64,11 @@ impl Animation {
     }
 
     pub fn subscription(&self) -> iced::Subscription<Message> {
-        let back_and_forth_subscription = Subscription::batch(
-            (0..4).map(|idx| self.back_and_forth_animation[idx].subscription()),
-        );
+        let back_and_forth_subscription = Subscription::batch((0..4).map(|idx| {
+            self.back_and_forth_animation[idx]
+                .borrow_mut()
+                .subscription()
+        }));
         let balloon_animation_subscription =
             Subscription::batch((0..4).map(|idx| self.balloon_animation[idx].subscription()));
 
@@ -80,7 +87,15 @@ impl Animation {
 
     fn draw_balloon_and_penguin(&self, frame: &mut Frame<Renderer>, idx: usize) {
         if self.balloon_animation[idx].landed {
-            let image_handle = self.back_and_forth_animation[idx].get_current_image_handle();
+            if *self.balloon_landed[idx].borrow() == false {
+                *self.balloon_landed[idx].borrow_mut() = true;
+                self.back_and_forth_animation[idx]
+                    .borrow_mut()
+                    .current_pos_x = self.balloon_animation[idx].current_pos_x;
+            }
+            let image_handle = self.back_and_forth_animation[idx]
+                .borrow()
+                .get_current_image_handle();
             let image = iced::advanced::image::Image {
                 handle: image_handle,
                 filter_method: Default::default(),
@@ -91,10 +106,10 @@ impl Animation {
 
             frame.draw_image(
                 Rectangle {
-                    x: self.back_and_forth_animation[idx].current_pos_x,
-                    y: self.back_and_forth_animation[idx].current_pos_y,
-                    width: self.back_and_forth_animation[idx].sprite_height,
-                    height: self.back_and_forth_animation[idx].sprite_width,
+                    x: self.back_and_forth_animation[idx].borrow().current_pos_x,
+                    y: self.back_and_forth_animation[idx].borrow().current_pos_y,
+                    width: self.back_and_forth_animation[idx].borrow().sprite_height,
+                    height: self.back_and_forth_animation[idx].borrow().sprite_width,
                 },
                 image,
             );
@@ -117,26 +132,26 @@ impl Animation {
                 },
                 balloon_image,
             );
+        } else {
+            let balloon_image_handle = self.balloon_animation[idx].balloon_with_penguin.clone();
+            let balloon_image = iced::advanced::image::Image {
+                handle: balloon_image_handle,
+                filter_method: Default::default(),
+                rotation: Radians(0.0f32),
+                opacity: 2.0,
+                snap: false,
+            };
+
+            frame.draw_image(
+                Rectangle {
+                    x: self.balloon_animation[idx].current_pos_x,
+                    y: self.balloon_animation[idx].current_pos_y,
+                    width: self.balloon_animation[idx].sprite_height,
+                    height: self.balloon_animation[idx].sprite_width,
+                },
+                balloon_image,
+            );
         }
-
-        let balloon_image_handle = self.balloon_animation[idx].balloon_with_penguin.clone();
-        let balloon_image = iced::advanced::image::Image {
-            handle: balloon_image_handle,
-            filter_method: Default::default(),
-            rotation: Radians(0.0f32),
-            opacity: 2.0,
-            snap: false,
-        };
-
-        frame.draw_image(
-            Rectangle {
-                x: self.balloon_animation[idx].current_pos_x,
-                y: self.balloon_animation[idx].current_pos_y,
-                width: self.balloon_animation[idx].sprite_height,
-                height: self.balloon_animation[idx].sprite_width,
-            },
-            balloon_image,
-        );
     }
 }
 
