@@ -11,5 +11,5 @@ iced = { git = "https://github.com/iced-rs/iced", features = [
 	"smol",
 ] }
 iced_runtime = { git = "https://github.com/iced-rs/iced" }
-iced_layershell = { git = "https://github.com/waycrate/exwlshelleventloop", branch = "iced14", package = "iced_layershell" }
+iced_layershell = { git = "https://github.com/waycrate/exwlshelleventloop", package = "iced_layershell" }
 rand = "0.9.1"
