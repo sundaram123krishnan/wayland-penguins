@@ -35,7 +35,7 @@ fn get_animation_folder(state: &BackAndForthAnimationState) -> &'static str {
         BackAndForthAnimationState::FrontToLeft | BackAndForthAnimationState::FrontToRight => {
             "Front to Left Animation"
         }
-        _ => "Front to Right Animation", 
+        _ => "Front to Right Animation",
     }
 }
 
