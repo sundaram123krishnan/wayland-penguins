@@ -5,6 +5,7 @@ use std::{
     fs::{read, read_dir},
     path::{Path, PathBuf},
 };
+
 pub fn get_penguin_image(animation_state: BackAndForthAnimationState) -> Vec<image::Handle> {
     let paths = get_sorted_animation_paths(animation_state);
 
@@ -34,7 +35,7 @@ fn get_animation_folder(state: &BackAndForthAnimationState) -> &'static str {
         BackAndForthAnimationState::FrontToLeft | BackAndForthAnimationState::FrontToRight => {
             "Front to Left Animation"
         }
-        _ => "Front to Right Animation", // Default fallback
+        _ => "Front to Right Animation", 
     }
 }
 
