@@ -65,7 +65,7 @@ impl Animation {
     }
 
     pub fn subscription(&self) -> iced::Subscription<Message> {
-        let back_and_forth_subscription = Subscription::batch((0..4).map(|idx| {
+        let back_and_forth_subscription = Subscription::batch((0..10).map(|idx| {
             self.back_and_forth_animation[idx]
                 .borrow_mut()
                 .subscription()
