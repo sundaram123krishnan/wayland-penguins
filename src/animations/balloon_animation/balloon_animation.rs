@@ -1,6 +1,7 @@
 use super::balloon_animation_assets::get_balloon_image;
 use crate::{animations::animation::AnimationMessage, penguin::Message};
 use iced::{widget::image, Task};
+use rand::Rng;
 
 pub struct BalloonAnimation {
     pub current_pos_x: f32,
@@ -32,19 +33,28 @@ impl BalloonAnimation {
         let balloon_without_penguin =
             get_balloon_image(BalloonAnimationState::BalloonWithoutPenguin);
 
-        let max_x = (screen_size.0 as f32 - 200.0).max(200.0);
-        let random_x = rand::random::<f32>() * max_x;
-        let random_y = rand::random::<f32>() * 200.0 - 100.0;
+        let sprite_height = 180.0;
+        let sprite_width = 180.0;
+
+        let screen_x = screen_size.0;
+
+        let left_margin = sprite_width * 1.75;
+
+        let right_margin = screen_x as f32 - (sprite_width * 1.75);
+
+        let mut rnd = rand::rng();
+
+        let random_x = rnd.random_range(left_margin..right_margin);
 
         let landing_y = screen_size.1 as f32 - 200.0;
 
         Self {
             current_pos_x: random_x,
-            current_pos_y: random_y,
+            current_pos_y: 10.0,
             balloon_with_penguin,
             balloon_without_penguin,
-            sprite_height: 180.0,
-            sprite_width: 180.0,
+            sprite_height,
+            sprite_width,
             descent_speed: 0.5,
             with_penguin: true,
             landing_y,
