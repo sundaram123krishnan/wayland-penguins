@@ -32,17 +32,17 @@ pub enum AnimationMessage {
 
 impl Animation {
     pub fn new(screen_size: (u32, u32)) -> Self {
-        let back_and_forth_animation: Vec<RefCell<BackAndForthAnimation>> = (0..10)
+        let back_and_forth_animation: Vec<RefCell<BackAndForthAnimation>> = (0..5)
             .map(|_| RefCell::new(BackAndForthAnimation::new(screen_size)))
             .collect();
 
-        let balloon_animation: Vec<BalloonAnimation> = (0..10)
+        let balloon_animation: Vec<BalloonAnimation> = (0..5)
             .map(|_| BalloonAnimation::new(screen_size))
             .collect();
         Self {
             back_and_forth_animation,
             balloon_animation,
-            balloon_landed: (0..10).map(|_| RefCell::new(false)).collect(),
+            balloon_landed: (0..5).map(|_| RefCell::new(false)).collect(),
             draw_cache: Default::default(),
         }
     }
@@ -53,25 +53,25 @@ impl Animation {
                 self.draw_cache.clear();
                 Task::none()
             }
-            AnimationMessage::BackAndForthMessage(msg) => Task::batch((0..10).map(|idx| {
+            AnimationMessage::BackAndForthMessage(msg) => Task::batch((0..5).map(|idx| {
                 self.back_and_forth_animation[idx]
                     .borrow_mut()
                     .update(msg.clone())
             })),
             AnimationMessage::BalloonMessage(msg) => {
-                Task::batch((0..10).map(|idx| self.balloon_animation[idx].update(msg.clone())))
+                Task::batch((0..5).map(|idx| self.balloon_animation[idx].update(msg.clone())))
             }
         }
     }
 
     pub fn subscription(&self) -> iced::Subscription<Message> {
-        let back_and_forth_subscription = Subscription::batch((0..10).map(|idx| {
+        let back_and_forth_subscription = Subscription::batch((0..5).map(|idx| {
             self.back_and_forth_animation[idx]
                 .borrow_mut()
                 .subscription()
         }));
         let balloon_animation_subscription =
-            Subscription::batch((0..10).map(|idx| self.balloon_animation[idx].subscription()));
+            Subscription::batch((0..5).map(|idx| self.balloon_animation[idx].subscription()));
 
         iced::Subscription::batch(vec![
             back_and_forth_subscription,
