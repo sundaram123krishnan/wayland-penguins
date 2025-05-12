@@ -9,6 +9,9 @@ use iced::{
     Color, Element, Length, Point, Radians, Rectangle, Renderer, Subscription, Task, Theme,
 };
 
+use hyprland::data::*;
+use hyprland::prelude::*;
+
 use super::{
     back_forth_animation::back_forth_animation::{
         BackAndForthAnimation, BackAndForthAnimationMessage,
@@ -134,6 +137,16 @@ impl Animation {
                 balloon_image,
             );
         } else {
+            let CursorPosition { x, y } = CursorPosition::get().unwrap();
+
+            println!(
+                "cursor_x : {}, cursor_y: {}, balloon_x: {}, balloon_y: {}",
+                x,
+                y,
+                self.balloon_animation[idx].current_pos_x,
+                self.balloon_animation[idx].current_pos_y
+            );
+
             let balloon_image_handle = self.balloon_animation[idx].balloon_with_penguin.clone();
             let balloon_image = iced::advanced::image::Image {
                 handle: balloon_image_handle,
