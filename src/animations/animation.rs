@@ -9,15 +9,14 @@ use iced::{
     Color, Element, Length, Point, Radians, Rectangle, Renderer, Subscription, Task, Theme,
 };
 
-use hyprland::data::*;
-use hyprland::prelude::*;
-
 use super::{
     back_forth_animation::back_forth_animation::{
         BackAndForthAnimation, BackAndForthAnimationMessage,
     },
     balloon_animation::balloon_animation::{BalloonAnimation, BalloonAnimationMessage},
 };
+use hyprland::data::*;
+use hyprland::prelude::*;
 
 pub struct Animation {
     draw_cache: Cache,
@@ -139,14 +138,21 @@ impl Animation {
         } else {
             let CursorPosition { x, y } = CursorPosition::get().unwrap();
 
-            println!(
-                "cursor_x : {}, cursor_y: {}, balloon_x: {}, balloon_y: {}",
-                x,
-                y,
-                self.balloon_animation[idx].current_pos_x,
-                self.balloon_animation[idx].current_pos_y
-            );
+            let cursor_pos_x = self.balloon_animation[idx].current_pos_x + self.balloon_animation[idx].sprite_width / 2.0;
+            let cursor_pos_y = self.balloon_animation[idx].current_pos_y + self.balloon_animation[idx].sprite_height / 2.0;
 
+            if (x as f32 - cursor_pos_x).abs() <= 20.0 && (y as f32 - cursor_pos_y).abs() <= 20.0 {
+                frame.fill_text(iced::widget::canvas::Text {
+                    content: String::from("Welcome to linux"),
+                    position: iced::Point {
+                        x: cursor_pos_x,
+                        y: cursor_pos_y,
+                    },
+                    size: iced::Pixels(25.0),
+                    color: Color::WHITE,
+                    ..Default::default()
+                })
+            }
             let balloon_image_handle = self.balloon_animation[idx].balloon_with_penguin.clone();
             let balloon_image = iced::advanced::image::Image {
                 handle: balloon_image_handle,
