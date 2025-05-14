@@ -138,8 +138,10 @@ impl Animation {
         } else {
             let CursorPosition { x, y } = CursorPosition::get().unwrap();
 
-            let cursor_pos_x = self.balloon_animation[idx].current_pos_x + self.balloon_animation[idx].sprite_width / 2.0;
-            let cursor_pos_y = self.balloon_animation[idx].current_pos_y + self.balloon_animation[idx].sprite_height / 2.0;
+            let cursor_pos_x = self.balloon_animation[idx].current_pos_x
+                + self.balloon_animation[idx].sprite_width / 2.0;
+            let cursor_pos_y = self.balloon_animation[idx].current_pos_y
+                + self.balloon_animation[idx].sprite_height / 2.0;
 
             if (x as f32 - cursor_pos_x).abs() <= 20.0 && (y as f32 - cursor_pos_y).abs() <= 20.0 {
                 frame.fill_text(iced::widget::canvas::Text {
