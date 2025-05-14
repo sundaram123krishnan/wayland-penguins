@@ -1603,7 +1603,7 @@ dependencies = [
 [[package]]
 name = "iced"
 version = "0.14.0-dev"
-source = "git+https://github.com/iced-rs/iced#7a97773f1796fa7889435c78305d287449dd05a4"
+source = "git+https://github.com/iced-rs/iced#d39022432c778a8cda455f40b9c12245db86ce45"
 dependencies = [
  "iced_core",
  "iced_debug",
@@ -1619,7 +1619,7 @@ dependencies = [
 [[package]]
 name = "iced_core"
 version = "0.14.0-dev"
-source = "git+https://github.com/iced-rs/iced#7a97773f1796fa7889435c78305d287449dd05a4"
+source = "git+https://github.com/iced-rs/iced#d39022432c778a8cda455f40b9c12245db86ce45"
 dependencies = [
  "bitflags 2.9.0",
  "bytes",
@@ -1637,7 +1637,7 @@ dependencies = [
 [[package]]
 name = "iced_debug"
 version = "0.14.0-dev"
-source = "git+https://github.com/iced-rs/iced#7a97773f1796fa7889435c78305d287449dd05a4"
+source = "git+https://github.com/iced-rs/iced#d39022432c778a8cda455f40b9c12245db86ce45"
 dependencies = [
  "iced_core",
  "iced_futures",
@@ -1645,12 +1645,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "iced_devtools"
+version = "0.14.0-dev"
+source = "git+https://github.com/iced-rs/iced#d39022432c778a8cda455f40b9c12245db86ce45"
+dependencies = [
+ "iced_debug",
+ "iced_program",
+ "iced_widget",
+ "log",
+]
+
+[[package]]
 name = "iced_exdevtools"
 version = "0.14.0-dev"
-source = "git+https://github.com/waycrate/exwlshelleventloop#7ab5bac4869f8f88e21267e6085a451bf99754ab"
+source = "git+https://github.com/waycrate/exwlshelleventloop#f7ba07e59a80659ed47e02841c2cbd3f502b0207"
 dependencies = [
- "iced",
  "iced_debug",
+ "iced_program",
  "iced_widget",
  "log",
 ]
@@ -1658,7 +1669,7 @@ dependencies = [
 [[package]]
 name = "iced_futures"
 version = "0.14.0-dev"
-source = "git+https://github.com/iced-rs/iced#7a97773f1796fa7889435c78305d287449dd05a4"
+source = "git+https://github.com/iced-rs/iced#d39022432c778a8cda455f40b9c12245db86ce45"
 dependencies = [
  "futures",
  "iced_core",
@@ -1672,7 +1683,7 @@ dependencies = [
 [[package]]
 name = "iced_graphics"
 version = "0.14.0-dev"
-source = "git+https://github.com/iced-rs/iced#7a97773f1796fa7889435c78305d287449dd05a4"
+source = "git+https://github.com/iced-rs/iced#d39022432c778a8cda455f40b9c12245db86ce45"
 dependencies = [
  "bitflags 2.9.0",
  "bytemuck",
@@ -1693,17 +1704,19 @@ dependencies = [
 [[package]]
 name = "iced_layershell"
 version = "0.14.0-dev"
-source = "git+https://github.com/waycrate/exwlshelleventloop#7ab5bac4869f8f88e21267e6085a451bf99754ab"
+source = "git+https://github.com/waycrate/exwlshelleventloop#f7ba07e59a80659ed47e02841c2cbd3f502b0207"
 dependencies = [
  "enumflags2",
  "futures",
  "iced",
  "iced_core",
  "iced_debug",
+ "iced_devtools",
  "iced_exdevtools",
  "iced_futures",
  "iced_graphics",
  "iced_layershell_macros",
+ "iced_program",
  "iced_renderer",
  "iced_runtime",
  "layershellev",
@@ -1716,7 +1729,7 @@ dependencies = [
 [[package]]
 name = "iced_layershell_macros"
 version = "0.14.0-dev"
-source = "git+https://github.com/waycrate/exwlshelleventloop#7ab5bac4869f8f88e21267e6085a451bf99754ab"
+source = "git+https://github.com/waycrate/exwlshelleventloop#f7ba07e59a80659ed47e02841c2cbd3f502b0207"
 dependencies = [
  "darling",
  "manyhow",
@@ -1728,7 +1741,7 @@ dependencies = [
 [[package]]
 name = "iced_program"
 version = "0.14.0-dev"
-source = "git+https://github.com/iced-rs/iced#7a97773f1796fa7889435c78305d287449dd05a4"
+source = "git+https://github.com/iced-rs/iced#d39022432c778a8cda455f40b9c12245db86ce45"
 dependencies = [
  "iced_graphics",
  "iced_runtime",
@@ -1737,7 +1750,7 @@ dependencies = [
 [[package]]
 name = "iced_renderer"
 version = "0.14.0-dev"
-source = "git+https://github.com/iced-rs/iced#7a97773f1796fa7889435c78305d287449dd05a4"
+source = "git+https://github.com/iced-rs/iced#d39022432c778a8cda455f40b9c12245db86ce45"
 dependencies = [
  "iced_graphics",
  "iced_tiny_skia",
@@ -1749,7 +1762,7 @@ dependencies = [
 [[package]]
 name = "iced_runtime"
 version = "0.14.0-dev"
-source = "git+https://github.com/iced-rs/iced#7a97773f1796fa7889435c78305d287449dd05a4"
+source = "git+https://github.com/iced-rs/iced#d39022432c778a8cda455f40b9c12245db86ce45"
 dependencies = [
  "bytes",
  "iced_core",
@@ -1762,7 +1775,7 @@ dependencies = [
 [[package]]
 name = "iced_tiny_skia"
 version = "0.14.0-dev"
-source = "git+https://github.com/iced-rs/iced#7a97773f1796fa7889435c78305d287449dd05a4"
+source = "git+https://github.com/iced-rs/iced#d39022432c778a8cda455f40b9c12245db86ce45"
 dependencies = [
  "bytemuck",
  "cosmic-text",
@@ -1778,7 +1791,7 @@ dependencies = [
 [[package]]
 name = "iced_wgpu"
 version = "0.14.0-dev"
-source = "git+https://github.com/iced-rs/iced#7a97773f1796fa7889435c78305d287449dd05a4"
+source = "git+https://github.com/iced-rs/iced#d39022432c778a8cda455f40b9c12245db86ce45"
 dependencies = [
  "bitflags 2.9.0",
  "bytemuck",
@@ -1798,7 +1811,7 @@ dependencies = [
 [[package]]
 name = "iced_widget"
 version = "0.14.0-dev"
-source = "git+https://github.com/iced-rs/iced#7a97773f1796fa7889435c78305d287449dd05a4"
+source = "git+https://github.com/iced-rs/iced#d39022432c778a8cda455f40b9c12245db86ce45"
 dependencies = [
  "iced_renderer",
  "iced_runtime",
@@ -1812,7 +1825,7 @@ dependencies = [
 [[package]]
 name = "iced_winit"
 version = "0.14.0-dev"
-source = "git+https://github.com/iced-rs/iced#7a97773f1796fa7889435c78305d287449dd05a4"
+source = "git+https://github.com/iced-rs/iced#d39022432c778a8cda455f40b9c12245db86ce45"
 dependencies = [
  "iced_debug",
  "iced_program",
@@ -2110,7 +2123,7 @@ dependencies = [
 [[package]]
 name = "layershellev"
 version = "0.14.0-dev"
-source = "git+https://github.com/waycrate/exwlshelleventloop#7ab5bac4869f8f88e21267e6085a451bf99754ab"
+source = "git+https://github.com/waycrate/exwlshelleventloop#f7ba07e59a80659ed47e02841c2cbd3f502b0207"
 dependencies = [
  "bitflags 2.9.0",
  "calloop 0.14.2",
@@ -3817,9 +3830,9 @@ checksum = "61c41af27dd6d1e27b1b16b489db798443478cef1f06a660c96db617ba5de3b1"
 
 [[package]]
 name = "tempfile"
-version = "3.19.1"
+version = "3.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7437ac7763b9b123ccf33c338a5cc1bac6f69b45a136c19bdd8a65e3916435bf"
+checksum = "e8a64e3985349f2441a1a9ef0b853f869006c3855f2cda6862a94d26ebb9d6a1"
 dependencies = [
  "fastrand",
  "getrandom 0.3.3",
@@ -4336,7 +4349,7 @@ dependencies = [
 [[package]]
 name = "waycrate_xkbkeycode"
 version = "0.14.0-dev"
-source = "git+https://github.com/waycrate/exwlshelleventloop#7ab5bac4869f8f88e21267e6085a451bf99754ab"
+source = "git+https://github.com/waycrate/exwlshelleventloop#f7ba07e59a80659ed47e02841c2cbd3f502b0207"
 dependencies = [
  "bitflags 2.9.0",
  "calloop 0.14.2",
