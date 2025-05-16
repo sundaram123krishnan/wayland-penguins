@@ -38,9 +38,8 @@ impl Animation {
             .map(|_| RefCell::new(BackAndForthAnimation::new(screen_size)))
             .collect();
 
-        let balloon_animation: Vec<BalloonAnimation> = (0..5)
-            .map(|_| BalloonAnimation::new(screen_size))
-            .collect();
+        let balloon_animation: Vec<BalloonAnimation> =
+            (0..5).map(|_| BalloonAnimation::new(screen_size)).collect();
         Self {
             back_and_forth_animation,
             balloon_animation,
