@@ -8,6 +8,7 @@ pub struct BalloonAnimation {
     pub current_pos_y: f32,
     pub balloon_with_penguin: image::Handle,
     pub balloon_without_penguin: image::Handle,
+    pub balloon_with_hyprland_logo: image::Handle,
     pub sprite_height: f32,
     pub sprite_width: f32,
     descent_speed: f32,
@@ -20,6 +21,7 @@ pub struct BalloonAnimation {
 pub enum BalloonAnimationState {
     BallonWithPenguin,
     BalloonWithoutPenguin,
+    BalloonWithHyprlandLogo,
 }
 
 #[derive(Debug, Clone)]
@@ -33,6 +35,8 @@ impl BalloonAnimation {
         let balloon_without_penguin =
             get_balloon_image(BalloonAnimationState::BalloonWithoutPenguin);
 
+        let balloon_with_hyprland_logo =
+            get_balloon_image(BalloonAnimationState::BalloonWithHyprlandLogo);
         let sprite_height = 180.0;
         let sprite_width = 180.0;
 
@@ -53,6 +57,7 @@ impl BalloonAnimation {
             current_pos_y: 10.0,
             balloon_with_penguin,
             balloon_without_penguin,
+            balloon_with_hyprland_logo,
             sprite_height,
             sprite_width,
             descent_speed: 0.5,

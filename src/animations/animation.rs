@@ -142,36 +142,46 @@ impl Animation {
             let cursor_pos_y = self.balloon_animation[idx].current_pos_y
                 + self.balloon_animation[idx].sprite_height / 2.0;
 
-            if (x as f32 - cursor_pos_x).abs() <= 20.0 && (y as f32 - cursor_pos_y).abs() <= 20.0 {
-                frame.fill_text(iced::widget::canvas::Text {
-                    content: String::from("Welcome to linux"),
-                    position: iced::Point {
-                        x: cursor_pos_x,
-                        y: cursor_pos_y,
+            if (x as f32 - cursor_pos_x).abs() <= 30.0 && (y as f32 - cursor_pos_y).abs() <= 30.0 {
+                let balloon_image_handle = self.balloon_animation[idx]
+                    .balloon_with_hyprland_logo
+                    .clone();
+                let balloon_image = iced::advanced::image::Image {
+                    handle: balloon_image_handle,
+                    filter_method: Default::default(),
+                    rotation: Radians(0.0f32),
+                    opacity: 2.0,
+                    snap: false,
+                };
+                frame.draw_image(
+                    Rectangle {
+                        x: self.balloon_animation[idx].current_pos_x,
+                        y: self.balloon_animation[idx].current_pos_y,
+                        width: self.balloon_animation[idx].sprite_height,
+                        height: self.balloon_animation[idx].sprite_width,
                     },
-                    size: iced::Pixels(25.0),
-                    color: Color::WHITE,
-                    ..Default::default()
-                })
-            }
-            let balloon_image_handle = self.balloon_animation[idx].balloon_with_penguin.clone();
-            let balloon_image = iced::advanced::image::Image {
-                handle: balloon_image_handle,
-                filter_method: Default::default(),
-                rotation: Radians(0.0f32),
-                opacity: 2.0,
-                snap: false,
-            };
+                    balloon_image,
+                );
+            } else {
+                let balloon_image_handle = self.balloon_animation[idx].balloon_with_penguin.clone();
+                let balloon_image = iced::advanced::image::Image {
+                    handle: balloon_image_handle,
+                    filter_method: Default::default(),
+                    rotation: Radians(0.0f32),
+                    opacity: 2.0,
+                    snap: false,
+                };
 
-            frame.draw_image(
-                Rectangle {
-                    x: self.balloon_animation[idx].current_pos_x,
-                    y: self.balloon_animation[idx].current_pos_y,
-                    width: self.balloon_animation[idx].sprite_height,
-                    height: self.balloon_animation[idx].sprite_width,
-                },
-                balloon_image,
-            );
+                frame.draw_image(
+                    Rectangle {
+                        x: self.balloon_animation[idx].current_pos_x,
+                        y: self.balloon_animation[idx].current_pos_y,
+                        width: self.balloon_animation[idx].sprite_height,
+                        height: self.balloon_animation[idx].sprite_width,
+                    },
+                    balloon_image,
+                );
+            }
         }
     }
 }
