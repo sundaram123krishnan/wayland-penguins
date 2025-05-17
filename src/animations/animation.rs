@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::vec;
 
+use hyprland::data::{Animations, Binds, Client, Clients, Monitor, Monitors, Workspace, Workspaces};
 use crate::penguin::Message;
 use iced::advanced::graphics::geometry::Frame;
 use iced::widget::canvas::{Cache, Geometry, Path};
@@ -23,6 +24,7 @@ pub struct Animation {
     back_and_forth_animation: Vec<RefCell<BackAndForthAnimation>>,
     balloon_animation: Vec<BalloonAnimation>,
     balloon_landed: Vec<RefCell<bool>>,
+    window_clients: Vec<Client>,
 }
 
 #[derive(Debug, Clone)]
@@ -40,11 +42,14 @@ impl Animation {
 
         let balloon_animation: Vec<BalloonAnimation> =
             (0..5).map(|_| BalloonAnimation::new(screen_size)).collect();
+
+        let window_clients = Clients::get().unwrap().to_vec();
         Self {
             back_and_forth_animation,
             balloon_animation,
             balloon_landed: (0..5).map(|_| RefCell::new(false)).collect(),
             draw_cache: Default::default(),
+            window_clients,
         }
     }
 
@@ -52,6 +57,8 @@ impl Animation {
         match message {
             AnimationMessage::Tick => {
                 self.draw_cache.clear();
+                self.window_clients = Clients::get().unwrap().to_vec();
+                println!("{:?}", self.window_clients.len());
                 Task::none()
             }
             AnimationMessage::BackAndForthMessage(msg) => Task::batch((0..5).map(|idx| {
