@@ -1,8 +1,10 @@
 use std::cell::RefCell;
 use std::vec;
 
-use hyprland::data::{Animations, Binds, Client, Clients, Monitor, Monitors, Workspace, Workspaces};
 use crate::penguin::Message;
+use hyprland::data::{
+    Animations, Binds, Client, Clients, Monitor, Monitors, Workspace, Workspaces,
+};
 use iced::advanced::graphics::geometry::Frame;
 use iced::widget::canvas::{Cache, Geometry, Path};
 use iced::widget::{canvas, column};
@@ -36,14 +38,16 @@ pub enum AnimationMessage {
 
 impl Animation {
     pub fn new(screen_size: (u32, u32)) -> Self {
+        let window_clients = Clients::get().unwrap().to_vec();
+        let y_pos = window_clients[0].size.1;
+
         let back_and_forth_animation: Vec<RefCell<BackAndForthAnimation>> = (0..5)
-            .map(|_| RefCell::new(BackAndForthAnimation::new(screen_size)))
+            .map(|_| RefCell::new(BackAndForthAnimation::new(screen_size, y_pos)))
             .collect();
 
         let balloon_animation: Vec<BalloonAnimation> =
             (0..5).map(|_| BalloonAnimation::new(screen_size)).collect();
 
-        let window_clients = Clients::get().unwrap().to_vec();
         Self {
             back_and_forth_animation,
             balloon_animation,
@@ -58,7 +62,6 @@ impl Animation {
             AnimationMessage::Tick => {
                 self.draw_cache.clear();
                 self.window_clients = Clients::get().unwrap().to_vec();
-                println!("{:?}", self.window_clients.len());
                 Task::none()
             }
             AnimationMessage::BackAndForthMessage(msg) => Task::batch((0..5).map(|idx| {
