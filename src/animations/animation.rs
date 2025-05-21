@@ -48,7 +48,7 @@ fn is_small_window(screen_size: (u32, u32), client: &Client) -> bool {
 
     let area_ratio = client_area / screen_area;
 
-    area_ratio <= 0.33 && client.at.1 >= (screen_height / 2.0) as i16
+    area_ratio <= 0.33 && client.at.1 >= (screen_height / 4.5) as i16
 }
 
 fn get_half_bottom_window_clients(screen_size: (u32, u32)) -> Vec<Client> {
