@@ -59,8 +59,8 @@ fn randomize_start_point(turn_point: i32) -> f32 {
 }
 
 impl BackAndForthAnimation {
-    pub fn new(screen_size: (u32, u32)) -> Self {
-        let bottom = screen_size.1 as f32 - 65.0f32; // place the penguin in bottom
+    pub fn new(screen_size: (u32, u32), y_pos: i16) -> Self {
+        let bottom = y_pos as f32; // place the penguin in bottom
         let turn_point = randomize_turn_point(screen_size.0 - 100);
         let start_point = randomize_start_point(turn_point);
 
