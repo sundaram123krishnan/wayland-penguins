@@ -1,13 +1,12 @@
 use std::cell::RefCell;
+use std::fs::read;
 use std::vec;
 
 use crate::penguin::Message;
-use hyprland::data::{
-    Animations, Binds, Client, Clients, Monitor, Monitors, Workspace, Workspaces,
-};
+use hyprland::data::{Client, Clients};
 use iced::advanced::graphics::geometry::Frame;
 use iced::widget::canvas::{Cache, Geometry, Path};
-use iced::widget::{canvas, column};
+use iced::widget::{canvas, column, image};
 use iced::{
     Color, Element, Length, Point, Radians, Rectangle, Renderer, Subscription, Task, Theme,
 };
@@ -18,6 +17,7 @@ use super::{
     },
     balloon_animation::balloon_animation::{BalloonAnimation, BalloonAnimationMessage},
 };
+
 use hyprland::data::*;
 use hyprland::prelude::*;
 
@@ -29,6 +29,7 @@ pub struct Animation {
     balloon_animation: Vec<BalloonAnimation>,
     balloon_landed: Vec<RefCell<bool>>,
     half_bottom_window_clients: Vec<Client>,
+    penguin_copter: image::Handle,
     screen_size: (u32, u32),
 }
 
@@ -63,6 +64,15 @@ fn get_half_bottom_window_clients(screen_size: (u32, u32)) -> Vec<Client> {
     half_bottom_window_clients
 }
 
+fn get_penguin_copter_image() -> image::Handle {
+    let root = std::env::current_dir().unwrap();
+
+    let assets_dir = root.join("assets").join("PenguinCopter");
+    let asset_path = assets_dir.join("pixelated_penguin_copter.png");
+    let image_bytes = read(&asset_path).unwrap();
+    image::Handle::from_bytes(image_bytes)
+}
+
 impl Animation {
     pub fn new(screen_size: (u32, u32)) -> Self {
         let window_clients = Clients::get().unwrap().to_vec();
@@ -83,6 +93,7 @@ impl Animation {
             draw_cache: Default::default(),
             half_bottom_window_clients: get_half_bottom_window_clients(screen_size),
             screen_size,
+            penguin_copter: get_penguin_copter_image(),
         }
     }
 
