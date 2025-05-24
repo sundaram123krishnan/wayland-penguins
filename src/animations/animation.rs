@@ -21,8 +21,6 @@ use super::{
 use hyprland::data::*;
 use hyprland::prelude::*;
 
-const TOTAL_PENGUINS: usize = 1;
-
 pub struct Animation {
     draw_cache: Cache,
     back_and_forth_animation: Vec<RefCell<BackAndForthAnimation>>,
@@ -31,6 +29,7 @@ pub struct Animation {
     half_bottom_window_clients: Vec<Client>,
     penguin_copter: image::Handle,
     screen_size: (u32, u32),
+    animations_to_be_spawned: i32,
 }
 
 #[derive(Debug, Clone)]
@@ -78,22 +77,22 @@ impl Animation {
         let window_clients = Clients::get().unwrap().to_vec();
         let y_pos = window_clients[0].size.1;
 
-        let back_and_forth_animation: Vec<RefCell<BackAndForthAnimation>> = (0..TOTAL_PENGUINS)
+        let back_and_forth_animation: Vec<RefCell<BackAndForthAnimation>> = (0..1)
             .map(|_| RefCell::new(BackAndForthAnimation::new(screen_size, y_pos)))
             .collect();
 
-        let balloon_animation: Vec<BalloonAnimation> = (0..TOTAL_PENGUINS)
-            .map(|_| BalloonAnimation::new(screen_size))
-            .collect();
+        let balloon_animation: Vec<BalloonAnimation> =
+            (0..1).map(|_| BalloonAnimation::new(screen_size)).collect();
 
         Self {
             back_and_forth_animation,
             balloon_animation,
-            balloon_landed: (0..TOTAL_PENGUINS).map(|_| RefCell::new(false)).collect(),
+            balloon_landed: (0..7).map(|_| RefCell::new(false)).collect(),
             draw_cache: Default::default(),
             half_bottom_window_clients: get_half_bottom_window_clients(screen_size),
             screen_size,
             penguin_copter: get_penguin_copter_image(),
+            animations_to_be_spawned: 0,
         }
     }
 
@@ -101,30 +100,51 @@ impl Animation {
         match message {
             AnimationMessage::Tick => {
                 self.draw_cache.clear();
+                // This is to add a delay
+                // Can't think of anything better
+                if self.animations_to_be_spawned % 200 == 0
+                    && self.animations_to_be_spawned <= 1000
+                    && self.animations_to_be_spawned >= 200
+                {
+                    self.balloon_animation
+                        .push(BalloonAnimation::new(self.screen_size));
+                    self.back_and_forth_animation
+                        .push(RefCell::new(BackAndForthAnimation::new(
+                            self.screen_size,
+                            (self.screen_size.1 as f32 - 60.0) as i16,
+                        )));
+                } else if self.animations_to_be_spawned > 1000 {
+                    self.half_bottom_window_clients =
+                        get_half_bottom_window_clients(self.screen_size);
+                    return Task::none();
+                }
+                self.animations_to_be_spawned += 1;
                 self.half_bottom_window_clients = get_half_bottom_window_clients(self.screen_size);
                 Task::none()
             }
             AnimationMessage::BackAndForthMessage(msg) => {
-                Task::batch((0..TOTAL_PENGUINS).map(|idx| {
+                Task::batch((0..self.back_and_forth_animation.len()).map(|idx| {
                     self.back_and_forth_animation[idx]
                         .borrow_mut()
                         .update(msg.clone())
                 }))
             }
             AnimationMessage::BalloonMessage(msg) => Task::batch(
-                (0..TOTAL_PENGUINS).map(|idx| self.balloon_animation[idx].update(msg.clone())),
+                (0..self.balloon_animation.len())
+                    .map(|idx| self.balloon_animation[idx].update(msg.clone())),
             ),
         }
     }
 
     pub fn subscription(&self) -> iced::Subscription<Message> {
-        let back_and_forth_subscription = Subscription::batch((0..TOTAL_PENGUINS).map(|idx| {
-            self.back_and_forth_animation[idx]
-                .borrow_mut()
-                .subscription()
-        }));
+        let back_and_forth_subscription =
+            Subscription::batch((0..self.back_and_forth_animation.len()).map(|idx| {
+                self.back_and_forth_animation[idx]
+                    .borrow_mut()
+                    .subscription()
+            }));
         let balloon_animation_subscription = Subscription::batch(
-            (0..TOTAL_PENGUINS).map(|idx| self.balloon_animation[idx].subscription()),
+            (0..self.balloon_animation.len()).map(|idx| self.balloon_animation[idx].subscription()),
         );
 
         iced::Subscription::batch(vec![
@@ -141,7 +161,6 @@ impl Animation {
     }
 
     fn draw_balloon_and_penguin(&self, frame: &mut Frame<Renderer>, idx: usize) {
-        println!("{:?}", self.half_bottom_window_clients.len());
         if self.balloon_animation[idx].landed {
             let back_forth_y_pos = self.back_and_forth_animation[idx].borrow().current_pos_y;
 
@@ -260,7 +279,7 @@ impl<Message> canvas::Program<Message> for Animation {
         let screen = self.draw_cache.draw(renderer, bounds.size(), |frame| {
             let background = Path::rectangle(Point::ORIGIN, bounds.size());
             frame.fill(&background, Color::TRANSPARENT);
-            for i in 0..self.back_and_forth_animation.len() {
+            for i in 0..self.balloon_animation.len() {
                 self.draw_balloon_and_penguin(frame, i);
             }
         });
