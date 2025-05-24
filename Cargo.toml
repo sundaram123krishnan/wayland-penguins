@@ -5,10 +5,10 @@ edition = "2021"
 
 [dependencies]
 iced = { git = "https://github.com/iced-rs/iced", features = [
-	"image",
-	"canvas",
-	"advanced",
-	"smol",
+    "image",
+    "canvas",
+    "advanced",
+    "smol",
 ] }
 iced_runtime = { git = "https://github.com/iced-rs/iced" }
 iced_layershell = { git = "https://github.com/waycrate/exwlshelleventloop", package = "iced_layershell" }
