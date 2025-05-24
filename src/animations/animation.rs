@@ -21,7 +21,6 @@ use super::{
 use hyprland::data::*;
 use hyprland::prelude::*;
 
-
 pub struct Animation {
     draw_cache: Cache,
     back_and_forth_animation: Vec<RefCell<BackAndForthAnimation>>,
@@ -82,9 +81,8 @@ impl Animation {
             .map(|_| RefCell::new(BackAndForthAnimation::new(screen_size, y_pos)))
             .collect();
 
-        let balloon_animation: Vec<BalloonAnimation> = (0..1)
-            .map(|_| BalloonAnimation::new(screen_size))
-            .collect();
+        let balloon_animation: Vec<BalloonAnimation> =
+            (0..1).map(|_| BalloonAnimation::new(screen_size)).collect();
 
         Self {
             back_and_forth_animation,
@@ -104,12 +102,20 @@ impl Animation {
                 self.draw_cache.clear();
                 // This is to add a delay
                 // Can't think of anything better
-                if self.animations_to_be_spawned% 200 == 0  && self.animations_to_be_spawned<= 1000 && self.animations_to_be_spawned>= 200 {
-                    self.balloon_animation.push(BalloonAnimation::new(self.screen_size));
-                    self.back_and_forth_animation.push(RefCell::new(BackAndForthAnimation::new(self.screen_size, (self.screen_size.1 as f32 - 60.0)as i16)));
-                }
-                else if self.animations_to_be_spawned > 1000 {
-                    self.half_bottom_window_clients = get_half_bottom_window_clients(self.screen_size);
+                if self.animations_to_be_spawned % 200 == 0
+                    && self.animations_to_be_spawned <= 1000
+                    && self.animations_to_be_spawned >= 200
+                {
+                    self.balloon_animation
+                        .push(BalloonAnimation::new(self.screen_size));
+                    self.back_and_forth_animation
+                        .push(RefCell::new(BackAndForthAnimation::new(
+                            self.screen_size,
+                            (self.screen_size.1 as f32 - 60.0) as i16,
+                        )));
+                } else if self.animations_to_be_spawned > 1000 {
+                    self.half_bottom_window_clients =
+                        get_half_bottom_window_clients(self.screen_size);
                     return Task::none();
                 }
                 self.animations_to_be_spawned += 1;
@@ -124,17 +130,19 @@ impl Animation {
                 }))
             }
             AnimationMessage::BalloonMessage(msg) => Task::batch(
-                (0..self.balloon_animation.len()).map(|idx| self.balloon_animation[idx].update(msg.clone())),
+                (0..self.balloon_animation.len())
+                    .map(|idx| self.balloon_animation[idx].update(msg.clone())),
             ),
         }
     }
 
     pub fn subscription(&self) -> iced::Subscription<Message> {
-        let back_and_forth_subscription = Subscription::batch((0..self.back_and_forth_animation.len()).map(|idx| {
-            self.back_and_forth_animation[idx]
-                .borrow_mut()
-                .subscription()
-        }));
+        let back_and_forth_subscription =
+            Subscription::batch((0..self.back_and_forth_animation.len()).map(|idx| {
+                self.back_and_forth_animation[idx]
+                    .borrow_mut()
+                    .subscription()
+            }));
         let balloon_animation_subscription = Subscription::batch(
             (0..self.balloon_animation.len()).map(|idx| self.balloon_animation[idx].subscription()),
         );
