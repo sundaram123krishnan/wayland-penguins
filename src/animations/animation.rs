@@ -30,6 +30,7 @@ pub struct Animation {
     penguin_copter: image::Handle,
     screen_size: (u32, u32),
     animations_to_be_spawned: i32,
+    bottom_y_pos: i16,
 }
 
 #[derive(Debug, Clone)]
@@ -93,6 +94,7 @@ impl Animation {
             screen_size,
             penguin_copter: get_penguin_copter_image(),
             animations_to_be_spawned: 0,
+            bottom_y_pos: y_pos,
         }
     }
 
@@ -111,7 +113,7 @@ impl Animation {
                     self.back_and_forth_animation
                         .push(RefCell::new(BackAndForthAnimation::new(
                             self.screen_size,
-                            (self.screen_size.1 as f32 - 60.0) as i16,
+                            (self.bottom_y_pos) as i16,
                         )));
                 } else if self.animations_to_be_spawned > 1000 {
                     self.half_bottom_window_clients =
