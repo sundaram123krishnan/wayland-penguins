@@ -1,16 +1,16 @@
 use std::cell::RefCell;
-use std::fs::read;
 use std::vec;
 
 use crate::penguin::Message;
 use hyprland::data::{Client, Clients};
 use iced::advanced::graphics::geometry::Frame;
 use iced::widget::canvas::{Cache, Geometry, Path};
-use iced::widget::{canvas, column, image};
+use iced::widget::{canvas, column};
 use iced::{
     Color, Element, Length, Point, Radians, Rectangle, Renderer, Subscription, Task, Theme,
 };
 
+use super::copter_animation::copter_animation::{CopterAnimation, CopterAnimationMessage};
 use super::{
     back_forth_animation::back_forth_animation::{
         BackAndForthAnimation, BackAndForthAnimationMessage,
@@ -25,9 +25,9 @@ pub struct Animation {
     draw_cache: Cache,
     back_and_forth_animation: Vec<RefCell<BackAndForthAnimation>>,
     balloon_animation: Vec<BalloonAnimation>,
+    copter_animation: Vec<CopterAnimation>,
     balloon_landed: Vec<RefCell<bool>>,
     half_bottom_window_clients: Vec<Client>,
-    penguin_copter: image::Handle,
     screen_size: (u32, u32),
     animations_to_be_spawned: i32,
     bottom_y_pos: i16,
@@ -38,6 +38,7 @@ pub enum AnimationMessage {
     Tick,
     BackAndForthMessage(BackAndForthAnimationMessage),
     BalloonMessage(BalloonAnimationMessage),
+    CopterMessage(CopterAnimationMessage),
 }
 
 fn is_small_window(screen_size: (u32, u32), client: &Client) -> bool {
@@ -64,15 +65,6 @@ fn get_half_bottom_window_clients(screen_size: (u32, u32)) -> Vec<Client> {
     half_bottom_window_clients
 }
 
-fn get_penguin_copter_image() -> image::Handle {
-    let root = std::env::current_dir().unwrap();
-
-    let assets_dir = root.join("assets").join("PenguinCopter");
-    let asset_path = assets_dir.join("pixelated_penguin_copter.png");
-    let image_bytes = read(&asset_path).unwrap();
-    image::Handle::from_bytes(image_bytes)
-}
-
 impl Animation {
     pub fn new(screen_size: (u32, u32)) -> Self {
         let window_clients = Clients::get().unwrap().to_vec();
@@ -85,6 +77,9 @@ impl Animation {
         let balloon_animation: Vec<BalloonAnimation> =
             (0..1).map(|_| BalloonAnimation::new(screen_size)).collect();
 
+        let copter_animation: Vec<CopterAnimation> =
+            (0..1).map(|_| CopterAnimation::new(screen_size)).collect();
+
         Self {
             back_and_forth_animation,
             balloon_animation,
@@ -92,8 +87,8 @@ impl Animation {
             draw_cache: Default::default(),
             half_bottom_window_clients: get_half_bottom_window_clients(screen_size),
             screen_size,
-            penguin_copter: get_penguin_copter_image(),
             animations_to_be_spawned: 0,
+            copter_animation,
             bottom_y_pos: y_pos,
         }
     }
@@ -104,6 +99,7 @@ impl Animation {
                 self.draw_cache.clear();
                 // This is to add a delay
                 // Can't think of anything better
+                // spawn more copter animation penguins
                 if self.animations_to_be_spawned % 200 == 0
                     && self.animations_to_be_spawned <= 1000
                     && self.animations_to_be_spawned >= 200
@@ -115,6 +111,8 @@ impl Animation {
                             self.screen_size,
                             (self.bottom_y_pos) as i16,
                         )));
+                    self.copter_animation
+                        .push(CopterAnimation::new(self.screen_size));
                 } else if self.animations_to_be_spawned > 1000 {
                     self.half_bottom_window_clients =
                         get_half_bottom_window_clients(self.screen_size);
@@ -135,6 +133,10 @@ impl Animation {
                 (0..self.balloon_animation.len())
                     .map(|idx| self.balloon_animation[idx].update(msg.clone())),
             ),
+            AnimationMessage::CopterMessage(msg) => Task::batch(
+                (0..self.copter_animation.len())
+                    .map(|idx| self.copter_animation[idx].update(msg.clone())),
+            ),
         }
     }
 
@@ -148,12 +150,16 @@ impl Animation {
         let balloon_animation_subscription = Subscription::batch(
             (0..self.balloon_animation.len()).map(|idx| self.balloon_animation[idx].subscription()),
         );
+        let copter_animation_subscription = Subscription::batch(
+            (0..self.copter_animation.len()).map(|idx| self.copter_animation[idx].subscription()),
+        );
 
         iced::Subscription::batch(vec![
             back_and_forth_subscription,
             iced::time::every(std::time::Duration::from_millis(16))
                 .map(|_| Message::PlayAnimationMessage(AnimationMessage::Tick)),
             balloon_animation_subscription,
+            copter_animation_subscription,
         ])
     }
 
@@ -222,6 +228,24 @@ impl Animation {
                 + self.balloon_animation[idx].sprite_width / 2.0;
             let cursor_pos_y = self.balloon_animation[idx].current_pos_y
                 + self.balloon_animation[idx].sprite_height / 2.0;
+
+            let copter_image_handle = self.copter_animation[idx].copter_asset.clone();
+            let copter_image = iced::advanced::image::Image {
+                handle: copter_image_handle,
+                filter_method: Default::default(),
+                opacity: 1.0,
+                snap: false,
+                rotation: Radians(0.0f32),
+            };
+            frame.draw_image(
+                Rectangle {
+                    x: self.copter_animation[idx].current_pos_x,
+                    y: self.copter_animation[idx].current_pos_y,
+                    width: self.copter_animation[idx].sprite_height,
+                    height: self.copter_animation[idx].sprite_width,
+                },
+                copter_image,
+            );
 
             if (x as f32 - cursor_pos_x).abs() <= 30.0 && (y as f32 - cursor_pos_y).abs() <= 30.0 {
                 let balloon_image_handle = self.balloon_animation[idx]
