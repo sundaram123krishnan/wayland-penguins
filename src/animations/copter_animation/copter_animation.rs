@@ -3,6 +3,7 @@ use crate::penguin::Message;
 use iced::widget::image;
 use iced::Task;
 use rand::Rng;
+use std::f32::consts::TAU;
 
 pub struct CopterAnimation {
     pub current_pos_x: f32,
@@ -50,7 +51,7 @@ impl CopterAnimation {
             time: 0.0,
             hover_offset_y: 0.0,
             rotation_angle: 0.0,
-            wind_phase: rnd.random_range(0.0..6.28),
+            wind_phase: rnd.random_range(0.0..TAU),
         }
     }
 
