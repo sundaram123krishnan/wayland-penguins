@@ -69,8 +69,8 @@ impl AnimatePenguin {
                 Some(animation) => animation.update(msg),
                 None => Task::none(),
             },
-            Message::LatestWindow(id) => {
-                let id = id.expect("must can get one");
+            Message::LatestWindow(None) => iced::window::get_latest().map(Message::LatestWindow),
+            Message::LatestWindow(Some(id)) => {
                 self.mainwindow.set(id).expect("We just set once");
                 iced::window::get_size(id).map(Message::SizeUpdate)
             }
