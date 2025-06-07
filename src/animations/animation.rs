@@ -2,7 +2,6 @@ use std::cell::RefCell;
 use std::vec;
 
 use crate::penguin::Message;
-use hyprland::data::{Client, Clients};
 use iced::advanced::graphics::geometry::Frame;
 use iced::widget::canvas::{Cache, Geometry, Path};
 use iced::widget::{canvas, column};
@@ -17,17 +16,12 @@ use super::{
     },
     balloon_animation::balloon_animation::{BalloonAnimation, BalloonAnimationMessage},
 };
-
-use hyprland::data::*;
-use hyprland::prelude::*;
-
 pub struct Animation {
     draw_cache: Cache,
     back_and_forth_animation: Vec<RefCell<BackAndForthAnimation>>,
     balloon_animation: Vec<BalloonAnimation>,
     copter_animation: Vec<CopterAnimation>,
     balloon_landed: Vec<RefCell<bool>>,
-    half_bottom_window_clients: Vec<Client>,
     screen_size: (u32, u32),
     animations_to_be_spawned: i32,
     bottom_y_pos: i16,
@@ -41,34 +35,9 @@ pub enum AnimationMessage {
     CopterMessage(CopterAnimationMessage),
 }
 
-fn is_small_window(screen_size: (u32, u32), client: &Client) -> bool {
-    let screen_width = screen_size.0 as f32;
-    let screen_height = screen_size.1 as f32;
-    let screen_area = (screen_width * screen_height) as f64;
-
-    let client_area = client.size.0 as f64 * client.size.1 as f64;
-
-    let area_ratio = client_area / screen_area;
-
-    area_ratio <= 0.33 && client.at.1 >= (screen_height / 4.5) as i16
-}
-
-fn get_half_bottom_window_clients(screen_size: (u32, u32)) -> Vec<Client> {
-    let window_clients = Clients::get().unwrap().to_vec();
-
-    let half_bottom_window_clients: Vec<Client> = window_clients
-        .clone()
-        .into_iter()
-        .filter(|client| is_small_window(screen_size, client))
-        .collect();
-
-    half_bottom_window_clients
-}
-
 impl Animation {
     pub fn new(screen_size: (u32, u32)) -> Self {
-        let window_clients = Clients::get().unwrap().to_vec();
-        let y_pos = window_clients[0].size.1;
+        let y_pos = (screen_size.1 as i16) - 60;
 
         let back_and_forth_animation: Vec<RefCell<BackAndForthAnimation>> = (0..1)
             .map(|_| RefCell::new(BackAndForthAnimation::new(screen_size, y_pos)))
@@ -85,7 +54,6 @@ impl Animation {
             balloon_animation,
             balloon_landed: (0..7).map(|_| RefCell::new(false)).collect(),
             draw_cache: Default::default(),
-            half_bottom_window_clients: get_half_bottom_window_clients(screen_size),
             screen_size,
             animations_to_be_spawned: 0,
             copter_animation,
@@ -114,12 +82,9 @@ impl Animation {
                     self.copter_animation
                         .push(CopterAnimation::new(self.screen_size));
                 } else if self.animations_to_be_spawned > 1000 {
-                    self.half_bottom_window_clients =
-                        get_half_bottom_window_clients(self.screen_size);
                     return Task::none();
                 }
                 self.animations_to_be_spawned += 1;
-                self.half_bottom_window_clients = get_half_bottom_window_clients(self.screen_size);
                 Task::none()
             }
             AnimationMessage::BackAndForthMessage(msg) => {
@@ -222,13 +187,6 @@ impl Animation {
                 balloon_image,
             );
         } else {
-            let CursorPosition { x, y } = CursorPosition::get().unwrap();
-
-            let cursor_pos_x = self.balloon_animation[idx].current_pos_x
-                + self.balloon_animation[idx].sprite_width / 2.0;
-            let cursor_pos_y = self.balloon_animation[idx].current_pos_y
-                + self.balloon_animation[idx].sprite_height / 2.0;
-
             let copter_image_handle = self.copter_animation[idx].copter_asset.clone();
             let copter_image = iced::advanced::image::Image {
                 handle: copter_image_handle,
@@ -246,47 +204,24 @@ impl Animation {
                 },
                 copter_image,
             );
+            let balloon_image_handle = self.balloon_animation[idx].balloon_with_penguin.clone();
+            let balloon_image = iced::advanced::image::Image {
+                handle: balloon_image_handle,
+                filter_method: Default::default(),
+                rotation: Radians(0.0f32),
+                opacity: 2.0,
+                snap: false,
+            };
 
-            if (x as f32 - cursor_pos_x).abs() <= 30.0 && (y as f32 - cursor_pos_y).abs() <= 30.0 {
-                let balloon_image_handle = self.balloon_animation[idx]
-                    .balloon_with_hyprland_logo
-                    .clone();
-                let balloon_image = iced::advanced::image::Image {
-                    handle: balloon_image_handle,
-                    filter_method: Default::default(),
-                    rotation: Radians(0.0f32),
-                    opacity: 2.0,
-                    snap: false,
-                };
-                frame.draw_image(
-                    Rectangle {
-                        x: self.balloon_animation[idx].current_pos_x,
-                        y: self.balloon_animation[idx].current_pos_y,
-                        width: self.balloon_animation[idx].sprite_height,
-                        height: self.balloon_animation[idx].sprite_width,
-                    },
-                    balloon_image,
-                );
-            } else {
-                let balloon_image_handle = self.balloon_animation[idx].balloon_with_penguin.clone();
-                let balloon_image = iced::advanced::image::Image {
-                    handle: balloon_image_handle,
-                    filter_method: Default::default(),
-                    rotation: Radians(0.0f32),
-                    opacity: 2.0,
-                    snap: false,
-                };
-
-                frame.draw_image(
-                    Rectangle {
-                        x: self.balloon_animation[idx].current_pos_x,
-                        y: self.balloon_animation[idx].current_pos_y,
-                        width: self.balloon_animation[idx].sprite_height,
-                        height: self.balloon_animation[idx].sprite_width,
-                    },
-                    balloon_image,
-                );
-            }
+            frame.draw_image(
+                Rectangle {
+                    x: self.balloon_animation[idx].current_pos_x,
+                    y: self.balloon_animation[idx].current_pos_y,
+                    width: self.balloon_animation[idx].sprite_height,
+                    height: self.balloon_animation[idx].sprite_width,
+                },
+                balloon_image,
+            );
         }
     }
 }

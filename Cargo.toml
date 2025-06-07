@@ -14,4 +14,3 @@ iced_runtime = { git = "https://github.com/iced-rs/iced" }
 iced_layershell = { git = "https://github.com/waycrate/exwlshelleventloop", package = "iced_layershell" }
 rand = "0.9.1"
 tracing-subscriber = "0.3.19"
-hyprland = { git = "https://github.com/hyprland-community/hyprland-rs", branch = "master" }

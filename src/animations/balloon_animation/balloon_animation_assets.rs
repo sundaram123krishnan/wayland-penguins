@@ -35,6 +35,5 @@ pub fn get_balloon_image(balloon_animation_state: BalloonAnimationState) -> imag
     match balloon_animation_state {
         BalloonAnimationState::BallonWithPenguin => iced_image_handle[0].clone(),
         BalloonAnimationState::BalloonWithoutPenguin => iced_image_handle[1].clone(),
-        BalloonAnimationState::BalloonWithHyprlandLogo => iced_image_handle[2].clone(),
     }
 }
