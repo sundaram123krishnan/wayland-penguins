@@ -49,13 +49,23 @@ pub enum BackAndForthAnimationMessage {
 }
 
 fn randomize_turn_point(screen_size_x: u32) -> i32 {
-    let mut rng = rand::rng();
-    rng.random_range(300..screen_size_x - 50) as i32
+    let mut rng = rand::thread_rng();
+    let min = 300;
+    let max = (screen_size_x as i32).saturating_sub(50);
+    if min >= max {
+        return min;
+    }
+    rng.random_range(min..max)
 }
 
 fn randomize_start_point(turn_point: i32) -> f32 {
     let mut rng = rand::rng();
-    rng.random_range(5..turn_point - 300) as f32
+    let min = 5;
+    let max = turn_point.saturating_sub(300);
+    if min >= max {
+        return min as f32;
+    }
+    rng.random_range(min..max) as f32
 }
 
 impl BackAndForthAnimation {
@@ -171,11 +181,15 @@ impl BackAndForthAnimation {
             BackAndForthAnimationState::RightAnimation => self.update_right_animation_position(),
             BackAndForthAnimationState::LeftAnimation => self.update_left_animation_position(),
             BackAndForthAnimationState::FrontToLeft => {
-                self.current_pos_x -= self.animation_speed * 0.5; // move current position when turning
+                if self.current_pos_x > 0.0 {
+                    self.current_pos_x -= self.animation_speed * 0.5;
+                }
                 self.counter += 1;
             }
             BackAndForthAnimationState::FrontToRight => {
-                self.current_pos_x += self.animation_speed * 0.5; // still move the current position when turning
+                if self.current_pos_x < (self.screen_size.0 as f32 - self.sprite_width) {
+                    self.current_pos_x += self.animation_speed * 0.5;
+                }
                 self.counter += 1;
             }
             _ => self.counter += 1,
@@ -187,7 +201,12 @@ impl BackAndForthAnimation {
             self.counter = self.turn_point - 48;
             self.should_go_left = false;
         } else {
-            self.current_pos_x += self.animation_speed;
+            if self.current_pos_x >= (self.screen_size.0 as f32 - self.sprite_width - 1.0) {
+                self.counter = self.turn_point - 24;
+                self.direction = BackAndForthAnimationState::FrontToLeft;
+            } else {
+                self.current_pos_x += self.animation_speed;
+            }
             self.counter += 1;
         }
     }
@@ -196,7 +215,12 @@ impl BackAndForthAnimation {
         if self.current_pos_x <= self.start_point {
             self.counter = 2 * self.turn_point - 60;
         }
-        self.current_pos_x -= self.animation_speed;
+        if self.current_pos_x <= 1.0 {
+            self.counter = 2 * self.turn_point - 36;
+            self.direction = BackAndForthAnimationState::FrontToRight;
+        } else {
+            self.current_pos_x -= self.animation_speed;
+        }
         self.counter += 1;
     }
 
