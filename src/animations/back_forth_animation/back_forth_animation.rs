@@ -202,7 +202,7 @@ impl BackAndForthAnimation {
             self.should_go_left = false;
         } else {
             if self.current_pos_x >= (self.screen_size.0 as f32 - self.sprite_width - 1.0) {
-                self.counter = self.turn_point - 24; 
+                self.counter = self.turn_point - 24;
                 self.direction = BackAndForthAnimationState::FrontToLeft;
             } else {
                 self.current_pos_x += self.animation_speed;
@@ -216,7 +216,7 @@ impl BackAndForthAnimation {
             self.counter = 2 * self.turn_point - 60;
         }
         if self.current_pos_x <= 1.0 {
-            self.counter = 2 * self.turn_point - 36; 
+            self.counter = 2 * self.turn_point - 36;
             self.direction = BackAndForthAnimationState::FrontToRight;
         } else {
             self.current_pos_x -= self.animation_speed;
