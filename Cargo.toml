@@ -4,13 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-iced = { git = "https://github.com/iced-rs/iced", features = [
-    "image",
-    "canvas",
-    "advanced",
-    "smol",
+iced = { version = "0.14.0", features = [
+	"image",
+	"canvas",
+	"advanced",
+	"smol",
 ] }
-iced_runtime = { git = "https://github.com/iced-rs/iced" }
-iced_layershell = { git = "https://github.com/waycrate/exwlshelleventloop", package = "iced_layershell" }
+iced_runtime = "0.14.0"
+iced_layershell = "0.14.2"
 rand = "0.9.1"
 tracing-subscriber = "0.3.19"

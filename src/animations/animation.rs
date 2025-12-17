@@ -3,6 +3,7 @@ use std::vec;
 
 use crate::penguin::Message;
 use iced::advanced::graphics::geometry::Frame;
+use iced::border::Radius;
 use iced::widget::canvas::{Cache, Geometry, Path};
 use iced::widget::{canvas, column};
 use iced::{
@@ -128,7 +129,7 @@ impl Animation {
         ])
     }
 
-    pub fn view(&self) -> Element<Message> {
+    pub fn view(&'_ self) -> Element<'_, Message> {
         let content = column![canvas(self).height(Length::Fill).width(Length::Fill)];
         content.into()
     }
@@ -156,6 +157,7 @@ impl Animation {
                 rotation: Radians(0.0f32),
                 opacity: 2.0,
                 snap: false,
+                border_radius: Radius::default(),
             };
 
             frame.draw_image(
@@ -175,6 +177,7 @@ impl Animation {
                 rotation: Radians(0.0f32),
                 opacity: 2.0,
                 snap: false,
+                border_radius: Radius::default(),
             };
 
             frame.draw_image(
@@ -194,6 +197,7 @@ impl Animation {
                 opacity: 1.0,
                 snap: false,
                 rotation: Radians(0.0f32),
+                border_radius: Radius::default(),
             };
             frame.draw_image(
                 Rectangle {
@@ -211,6 +215,8 @@ impl Animation {
                 rotation: Radians(0.0f32),
                 opacity: 2.0,
                 snap: false,
+
+                border_radius: Radius::default(),
             };
 
             frame.draw_image(

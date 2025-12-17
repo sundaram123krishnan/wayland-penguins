@@ -31,7 +31,7 @@ impl AnimatePenguin {
                 screen_size: None,
                 animation: None,
             },
-            iced::window::get_latest().map(Message::LatestWindow),
+            iced::window::latest().map(Message::LatestWindow),
         )
     }
 
@@ -69,10 +69,10 @@ impl AnimatePenguin {
                 Some(animation) => animation.update(msg),
                 None => Task::none(),
             },
-            Message::LatestWindow(None) => iced::window::get_latest().map(Message::LatestWindow),
+            Message::LatestWindow(None) => iced::window::latest().map(Message::LatestWindow),
             Message::LatestWindow(Some(id)) => {
                 self.mainwindow.set(id).expect("We just set once");
-                iced::window::get_size(id).map(Message::SizeUpdate)
+                iced::window::size(id).map(Message::SizeUpdate)
             }
             Message::SizeUpdate(size) => {
                 self.animation = Some(Animation::new((size.width as u32, size.height as u32)));
@@ -84,7 +84,7 @@ impl AnimatePenguin {
         };
     }
 
-    pub fn view(&self) -> Element<Message> {
+    pub fn view(&'_ self) -> Element<'_, Message> {
         let Some(screen_size) = self.screen_size else {
             return text("").into();
         };
