@@ -13,4 +13,4 @@ iced = { version = "0.14.0", features = [
 iced_runtime = "0.14.0"
 iced_layershell = "0.14.2"
 rand = "0.9.1"
-tracing-subscriber = "0.3.19"
+tracing-subscriber = "0.3.20"
